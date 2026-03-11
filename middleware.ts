@@ -1,8 +1,7 @@
-import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { getSupabaseMiddlewareState } from "@/lib/supabase/middleware";
 
-export function middleware(_request: NextRequest) {
+export function middleware() {
   const state = getSupabaseMiddlewareState();
 
   // TODO: Enforce auth redirects after Supabase auth integration.

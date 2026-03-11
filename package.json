@@ -21,6 +21,7 @@
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
     "@types/three": "^0.164.0",
+    "@eslint/eslintrc": "^3.2.0",
     "@typescript-eslint/parser": "^8.25.0",
     "eslint": "^9.17.0",
     "eslint-config-next": "^15.3.0",

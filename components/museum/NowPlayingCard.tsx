@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { ProjectDevice, ThemeConfig } from "@/types";
 
 type NowPlayingCardProps = {
@@ -30,7 +31,14 @@ export function NowPlayingCard({
       <div className="small-caption">NOW PLAYING</div>
       <div className="player-wrap">
         {/* TODO: Replace demo artwork/music metadata with project-linked assets. */}
-        <img className="cover-lg" src={theme.soundtrackCoverUrl} alt={`${device.name} era artwork`} />
+        <Image
+          className="cover-lg"
+          src={theme.soundtrackCoverUrl}
+          alt={`${device.name} era artwork`}
+          width={150}
+          height={150}
+          unoptimized
+        />
         <div>
           <div className="track-title">{theme.soundtrackTitle}</div>
           <div className="track-sub">
