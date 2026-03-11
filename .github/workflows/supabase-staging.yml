@@ -1,0 +1,40 @@
+name: supabase-staging
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - "supabase/**"
+      - ".github/workflows/supabase-staging.yml"
+
+jobs:
+  deploy-staging-db:
+    if: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' && secrets.STAGING_PROJECT_ID != '' && secrets.STAGING_DB_PASSWORD != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: staging
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link staging project
+        run: supabase link --project-ref "$STAGING_PROJECT_ID"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          STAGING_PROJECT_ID: ${{ secrets.STAGING_PROJECT_ID }}
+
+      - name: Push staging migrations
+        run: supabase db push
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
+
+      - name: Notes
+        run: echo "TODO: add seed or smoke-test steps once the Supabase project is initialized."

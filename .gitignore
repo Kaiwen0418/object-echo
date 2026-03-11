@@ -2,7 +2,6 @@
 node_modules/
 
 # package managers
-pnpm-lock.yaml
 .pnpm-store/
 
 # next.js

@@ -1,18 +1,21 @@
-type SupabaseClientPlaceholder = {
-  enabled: boolean;
-  url?: string;
-  anonKey?: string;
-};
+"use client";
 
-export function createSupabaseClient(): SupabaseClientPlaceholder {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+import { createBrowserClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { getSupabaseEnv } from "@/lib/supabase/config";
 
-  return {
-    enabled: Boolean(url && anonKey),
-    url,
-    anonKey
-  };
+let browserClient: SupabaseClient | null = null;
+
+export function createSupabaseClient() {
+  const env = getSupabaseEnv();
+
+  if (!env.enabled) {
+    return null;
+  }
+
+  if (!browserClient) {
+    browserClient = createBrowserClient(env.url!, env.anonKey!);
+  }
+
+  return browserClient;
 }
-
-// TODO: Replace this placeholder with @supabase/supabase-js client initialization.

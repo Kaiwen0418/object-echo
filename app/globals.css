@@ -185,6 +185,34 @@ textarea {
   gap: 16px;
 }
 
+.auth-shell {
+  width: min(560px, 100%);
+}
+
+.auth-button {
+  display: grid;
+  gap: 8px;
+  text-align: left;
+  background: color-mix(in oklab, var(--accent) 10%, transparent);
+}
+
+.auth-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.auth-hint {
+  display: block;
+  color: var(--muted);
+  font-size: 16px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.auth-alert {
+  color: var(--text);
+}
+
 .page {
   min-height: 100vh;
   color: var(--text);

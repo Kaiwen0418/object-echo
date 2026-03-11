@@ -1,15 +1,30 @@
-type SupabaseServerPlaceholder = {
-  enabled: boolean;
-  serviceRoleConfigured: boolean;
-};
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import { getSupabaseEnv } from "@/lib/supabase/config";
 
-export function createSupabaseServerClient(): SupabaseServerPlaceholder {
-  return {
-    enabled: Boolean(
-      process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    ),
-    serviceRoleConfigured: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY)
-  };
+export async function createSupabaseServerClient() {
+  const env = getSupabaseEnv();
+
+  if (!env.enabled) {
+    return null;
+  }
+
+  const cookieStore = await cookies();
+
+  return createServerClient(env.url!, env.anonKey!, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
+      },
+      setAll(cookiesToSet) {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+          });
+        } catch {
+          // Server Components may read cookies in a context where writes are ignored.
+        }
+      }
+    }
+  });
 }
-
-// TODO: Replace with server-side auth/session helpers after real Supabase wiring.

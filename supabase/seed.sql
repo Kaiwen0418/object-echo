@@ -1,0 +1,1 @@
+-- TODO: Add optional seed data after the real Supabase schema is created.

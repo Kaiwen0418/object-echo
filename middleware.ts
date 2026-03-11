@@ -1,17 +1,10 @@
-import { NextResponse } from "next/server";
-import { getSupabaseMiddlewareState } from "@/lib/supabase/middleware";
+import type { NextRequest } from "next/server";
+import { updateSession } from "@/lib/supabase/middleware";
 
-export function middleware() {
-  const state = getSupabaseMiddlewareState();
-
-  // TODO: Enforce auth redirects after Supabase auth integration.
-  if (!state.enabled) {
-    return NextResponse.next();
-  }
-
-  return NextResponse.next();
+export async function middleware(request: NextRequest) {
+  return updateSession(request);
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*"]
+  matcher: ["/dashboard/:path*", "/login", "/auth/callback"]
 };
