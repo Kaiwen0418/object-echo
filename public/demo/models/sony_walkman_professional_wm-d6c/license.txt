@@ -1,0 +1,11 @@
+Model Information:
+* title:	Sony Walkman Professional WM-D6C
+* source:	https://sketchfab.com/3d-models/sony-walkman-professional-wm-d6c-fa57b1cf2cf34746baecc3fe1736b704
+* author:	Nedotyopa (https://sketchfab.com/FF_Morph)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Sony Walkman Professional WM-D6C" (https://sketchfab.com/3d-models/sony-walkman-professional-wm-d6c-fa57b1cf2cf34746baecc3fe1736b704) by Nedotyopa (https://sketchfab.com/FF_Morph) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

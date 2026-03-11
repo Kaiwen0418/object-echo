@@ -1,0 +1,11 @@
+Model Information:
+* title:	Casio F-91W
+* source:	https://sketchfab.com/3d-models/casio-f-91w-c3d445e4e77441eba265504c0391a415
+* author:	Ahmad Riazi (https://sketchfab.com/ahmadriazi)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Casio F-91W" (https://sketchfab.com/3d-models/casio-f-91w-c3d445e4e77441eba265504c0391a415) by Ahmad Riazi (https://sketchfab.com/ahmadriazi) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

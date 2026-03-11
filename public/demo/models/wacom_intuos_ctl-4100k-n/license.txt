@@ -1,0 +1,11 @@
+Model Information:
+* title:	Graphic Tablet | Wacom Intuos CTL-4100K-N
+* source:	https://sketchfab.com/3d-models/graphic-tablet-wacom-intuos-ctl-4100k-n-3d91dc9bcf0a4ed0a78fae0507937f6c
+* author:	Astrien (https://sketchfab.com/Astrien)
+
+Model License:
+* license type:	CC-BY-NC-4.0 (http://creativecommons.org/licenses/by-nc/4.0/)
+* requirements:	Author must be credited. No commercial use.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Graphic Tablet | Wacom Intuos CTL-4100K-N" (https://sketchfab.com/3d-models/graphic-tablet-wacom-intuos-ctl-4100k-n-3d91dc9bcf0a4ed0a78fae0507937f6c) by Astrien (https://sketchfab.com/Astrien) licensed under CC-BY-NC-4.0 (http://creativecommons.org/licenses/by-nc/4.0/)

@@ -1,0 +1,11 @@
+Model Information:
+* title:	Peach MP3 Player
+* source:	https://sketchfab.com/3d-models/peach-mp3-player-ee9c5397f56049dca7cc123576ee3395
+* author:	RealgrumpyKitten1 (https://sketchfab.com/RealgrumpyKitten1)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Peach MP3 Player" (https://sketchfab.com/3d-models/peach-mp3-player-ee9c5397f56049dca7cc123576ee3395) by RealgrumpyKitten1 (https://sketchfab.com/RealgrumpyKitten1) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
