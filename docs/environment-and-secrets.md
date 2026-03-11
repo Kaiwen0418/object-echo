@@ -11,11 +11,7 @@ Current application variables:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - optional `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
-- `R2_ACCOUNT_ID`
-- `R2_ACCESS_KEY_ID`
-- `R2_SECRET_ACCESS_KEY`
-- `R2_BUCKET`
-- `R2_PUBLIC_BASE_URL`
+- `SUPABASE_STORAGE_BUCKET`
 
 For the current mock-first phase, the app can still run without these values.
 
@@ -67,15 +63,11 @@ Set these in Vercel:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
-- `R2_ACCOUNT_ID`
-- `R2_ACCESS_KEY_ID`
-- `R2_SECRET_ACCESS_KEY`
-- `R2_BUCKET`
-- `R2_PUBLIC_BASE_URL`
+- `SUPABASE_STORAGE_BUCKET`
 
 Recommended target:
 
-- Preview Vercel environment -> staging Supabase + non-production R2 bucket
+- Preview Vercel environment -> staging Supabase + staging storage bucket
 
 ### Production
 
@@ -83,7 +75,7 @@ Set the same keys, but point them to production services.
 
 Recommended target:
 
-- Production Vercel environment -> production Supabase + production R2 bucket
+- Production Vercel environment -> production Supabase + production storage bucket
 
 ## GitHub Actions Secrets
 

@@ -13,7 +13,7 @@ export default function HowItWorksPage() {
           <div className="section-eyebrow">Workflow</div>
           <h1>How it works</h1>
           <p>Create a project, add devices and assets, preview the Three.js museum timeline, then publish a public page.</p>
-          <p>Supabase, R2, and Sketchfab are wired as mockable interfaces so the local data shape already matches future production services.</p>
+          <p>Supabase database/auth/storage and Sketchfab are wired as mockable interfaces so the local data shape already matches future production services.</p>
         </article>
       </section>
     </main>

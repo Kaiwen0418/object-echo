@@ -34,7 +34,7 @@ The default local URL is `http://localhost:3000`.
 - pnpm
 - Three.js
 - Supabase placeholder integration
-- Cloudflare R2 placeholder integration
+- Supabase Storage placeholder integration
 
 ## Important Paths
 
@@ -43,9 +43,13 @@ The default local URL is `http://localhost:3000`.
 - `features/museum/`: reusable museum rendering layer
 - `data/demo/`: stable mock data used by preview and public museum pages
 - `lib/supabase/`: Supabase placeholders and future integration points
-- `lib/r2/`: R2 placeholders and future signing logic
+- `lib/storage/`: storage placeholders and future Supabase Storage helpers
 - `.github/workflows/`: CI and Supabase promotion workflows
 - `docs/`: deployment, branch rules, and environment setup notes
+
+Current mock upload route:
+
+- `/api/upload/storage-sign`
 
 ## Deployment Docs
 
@@ -68,7 +72,7 @@ The repository now includes a `supabase/` skeleton, but the integration is still
 
 - Database schema is not connected yet
 - Auth is not connected yet
-- R2 uploads are still mocked
+- Supabase Storage uploads are still mocked
 - Sketchfab search is still mocked
 
 ## Notes

@@ -6,7 +6,7 @@ This repository should use:
 
 - Vercel for the Next.js application
 - Supabase for auth and database
-- Cloudflare R2 for object storage
+- Supabase Storage for object storage
 - GitHub Actions for CI and Supabase migration delivery
 
 The recommended production flow is:
@@ -27,11 +27,7 @@ The app code currently reads these variables:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
-- `R2_ACCOUNT_ID`
-- `R2_ACCESS_KEY_ID`
-- `R2_SECRET_ACCESS_KEY`
-- `R2_BUCKET`
-- `R2_PUBLIC_BASE_URL`
+- `SUPABASE_STORAGE_BUCKET`
 
 GitHub Actions also expects these repository or environment secrets:
 
@@ -55,8 +51,8 @@ Create one Vercel project for this repository.
 Recommended Vercel environments:
 
 - Development: local only or optional shared dev values
-- Preview: staging Supabase project and non-production R2 bucket
-- Production: production Supabase project and production R2 bucket
+- Preview: staging Supabase project and staging storage bucket
+- Production: production Supabase project and production storage bucket
 
 Do not expose `SUPABASE_SERVICE_ROLE_KEY` to client code. It is server-only.
 
@@ -129,7 +125,7 @@ Avoid direct pushes to `main`.
 
 ## Notes For This Repository
 
-- Supabase and R2 integrations are still placeholders in code.
+- Supabase database, auth, and storage integrations are still partially placeholders in code.
 - The current workflows are ready for CI immediately.
 - The Supabase workflows become active once the `supabase/` directory is added.
-- The app can run locally without Supabase or R2 configured because the code uses mock fallbacks.
+- The app can run locally without full Supabase configuration because the code uses mock fallbacks.

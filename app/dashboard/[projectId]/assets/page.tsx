@@ -23,7 +23,7 @@ export default async function AssetsPage({
         <article className="panel">
           <div className="section-eyebrow">Asset management</div>
           <h1>Assets</h1>
-          <p>TODO: connect uploads to R2 and external source imports.</p>
+          <p>TODO: connect uploads to Supabase Storage and external source imports.</p>
           {bundle.assets.map((asset) => (
             <p key={asset.id}>
               {asset.type}: {asset.title ?? asset.sourceUrl}
