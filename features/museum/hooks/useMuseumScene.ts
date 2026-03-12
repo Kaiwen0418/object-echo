@@ -68,7 +68,12 @@ export function useMuseumScene(
   canvasRef: RefObject<ProgressCanvas | null>,
   bundle: MuseumProjectBundle,
   progress: number,
-  darkMode: boolean
+  darkMode: boolean,
+  options?: {
+    heroFocusIndex?: number;
+    heroSpinStrength?: number;
+    heroSpinCutoff?: number;
+  }
 ) {
   const targetProgressRef = useRef(progress);
 
@@ -239,6 +244,20 @@ export function useMuseumScene(
 
         mesh.rotation.y = Math.PI * 0.06 * local;
         mesh.position.z = -Math.abs(local) * 0.25;
+
+        const heroFocusIndex = options?.heroFocusIndex;
+        const heroSpinStrength = options?.heroSpinStrength ?? 0;
+        const heroSpinCutoff = options?.heroSpinCutoff ?? 0;
+
+        if (
+          typeof heroFocusIndex === "number" &&
+          index === heroFocusIndex &&
+          currentProgress <= heroSpinCutoff &&
+          heroSpinStrength > 0
+        ) {
+          mesh.rotation.y += performance.now() * heroSpinStrength;
+          mesh.rotation.z = Math.sin(performance.now() * heroSpinStrength * 0.35) * 0.04;
+        }
       });
 
       renderer.render(scene, camera);
@@ -254,7 +273,7 @@ export function useMuseumScene(
       canvas.__updateProgress = undefined;
       renderer.dispose();
     };
-  }, [bundle, canvasRef, darkMode]);
+  }, [bundle, canvasRef, darkMode, options?.heroFocusIndex, options?.heroSpinCutoff, options?.heroSpinStrength]);
 
   useEffect(() => {
     canvasRef.current?.__updateProgress?.(progress);
