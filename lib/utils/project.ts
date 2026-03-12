@@ -1,14 +1,335 @@
-import { demoBundle, demoProjects } from "@/data/demo/projects";
-import type { MuseumProjectBundle, Project } from "@/types";
+import { demoBundle, demoProjects, demoTheme } from "@/data/demo/projects";
+import { createSupabaseAdminClient, createSupabaseServerClient, getCurrentSupabaseUser } from "@/lib/supabase/server";
+import type {
+  MuseumProjectBundle,
+  Project,
+  ProjectAsset,
+  ProjectDevice,
+  PublishedPage,
+  ThemeConfig,
+  UserProfile
+} from "@/types";
 
-export function listProjects(): Project[] {
-  return demoProjects;
+type UserProfileRow = {
+  id: string;
+  email: string;
+  username: string | null;
+  display_name: string;
+  avatar_url: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type ProjectRow = {
+  id: string;
+  user_id: string;
+  title: string;
+  slug: string;
+  description: string;
+  status: Project["status"];
+  created_at: string;
+  updated_at: string;
+};
+
+type ProjectAssetRow = {
+  id: string;
+  project_id: string;
+  type: ProjectAsset["type"];
+  source_type: ProjectAsset["sourceType"];
+  source_url: string | null;
+  storage_key: string | null;
+  title: string | null;
+  author: string | null;
+  license: string | null;
+  attribution: string | null;
+};
+
+type ProjectDeviceRow = {
+  id: string;
+  project_id: string;
+  year: number;
+  name: string;
+  era: string;
+  specs: ProjectDevice["specs"] | null;
+  model_asset_id: string | null;
+  music_asset_id: string | null;
+  sort_order: number;
+};
+
+type PublishedPageRow = {
+  id: string;
+  project_id: string;
+  slug: string;
+  title: string;
+  description: string;
+  theme: ThemeConfig | null;
+  published_at: string | null;
+};
+
+function mapUserProfile(row: UserProfileRow): UserProfile {
+  return {
+    id: row.id,
+    email: row.email,
+    displayName: row.display_name,
+    avatarUrl: row.avatar_url ?? undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
 }
 
-export function getProjectById(projectId: string): MuseumProjectBundle | undefined {
-  return demoBundle.project.id === projectId ? demoBundle : undefined;
+function mapProject(row: ProjectRow): Project {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    title: row.title,
+    slug: row.slug,
+    description: row.description,
+    status: row.status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
 }
 
-export function getProjectBySlug(slug: string): MuseumProjectBundle | undefined {
-  return demoBundle.project.slug === slug ? demoBundle : undefined;
+function mapProjectAsset(row: ProjectAssetRow): ProjectAsset {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    type: row.type,
+    sourceType: row.source_type,
+    sourceUrl: row.source_url ?? undefined,
+    storageKey: row.storage_key ?? undefined,
+    title: row.title ?? undefined,
+    author: row.author ?? undefined,
+    license: row.license ?? undefined,
+    attribution: row.attribution ?? undefined
+  };
+}
+
+function mapProjectDevice(row: ProjectDeviceRow): ProjectDevice {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    year: row.year,
+    name: row.name,
+    era: row.era,
+    specs: row.specs ?? [],
+    modelAssetId: row.model_asset_id ?? undefined,
+    musicAssetId: row.music_asset_id ?? undefined,
+    sortOrder: row.sort_order
+  };
+}
+
+function createDraftPublishedPage(project: Project): PublishedPage {
+  return {
+    id: `draft-${project.id}`,
+    projectId: project.id,
+    slug: project.slug,
+    title: project.title,
+    description: project.description,
+    theme: demoTheme,
+    publishedAt: undefined
+  };
+}
+
+function mapPublishedPage(row: PublishedPageRow): PublishedPage {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    slug: row.slug,
+    title: row.title,
+    description: row.description,
+    theme: row.theme ?? demoTheme,
+    publishedAt: row.published_at ?? undefined
+  };
+}
+
+function buildBundle(params: {
+  owner: UserProfile;
+  project: Project;
+  devices: ProjectDevice[];
+  assets: ProjectAsset[];
+  publishedPage?: PublishedPage;
+}): MuseumProjectBundle {
+  return {
+    owner: params.owner,
+    project: params.project,
+    devices: params.devices,
+    assets: params.assets,
+    publishedPage: params.publishedPage ?? createDraftPublishedPage(params.project)
+  };
+}
+
+async function fetchProjectBundle(projectRow: ProjectRow): Promise<MuseumProjectBundle | undefined> {
+  const supabase = await createSupabaseServerClient();
+
+  if (!supabase) {
+    return undefined;
+  }
+
+  const [{ data: ownerRow }, { data: deviceRows }, { data: assetRows }, { data: publishedPageRow }] =
+    await Promise.all([
+      supabase.from("user_profiles").select("*").eq("id", projectRow.user_id).maybeSingle<UserProfileRow>(),
+      supabase.from("project_devices").select("*").eq("project_id", projectRow.id).order("sort_order", { ascending: true }).returns<ProjectDeviceRow[]>(),
+      supabase.from("project_assets").select("*").eq("project_id", projectRow.id).returns<ProjectAssetRow[]>(),
+      supabase.from("published_pages").select("*").eq("project_id", projectRow.id).maybeSingle<PublishedPageRow>()
+    ]);
+
+  if (!ownerRow) {
+    return undefined;
+  }
+
+  return buildBundle({
+    owner: mapUserProfile(ownerRow),
+    project: mapProject(projectRow),
+    devices: (deviceRows ?? []).map(mapProjectDevice),
+    assets: (assetRows ?? []).map(mapProjectAsset),
+    publishedPage: publishedPageRow ? mapPublishedPage(publishedPageRow) : undefined
+  });
+}
+
+export async function ensureCurrentUserProfile() {
+  const user = await getCurrentSupabaseUser();
+  const admin = createSupabaseAdminClient();
+
+  if (!user || !admin) {
+    return null;
+  }
+
+  const { data, error } = await admin
+    .from("user_profiles")
+    .upsert(
+      {
+        id: user.id,
+        email: user.email ?? "",
+        display_name:
+          user.user_metadata?.display_name ??
+          user.user_metadata?.name ??
+          user.email?.split("@")[0] ??
+          "New User",
+        avatar_url: user.user_metadata?.avatar_url ?? null
+      },
+      { onConflict: "id" }
+    )
+    .select("*")
+    .single<UserProfileRow>();
+
+  if (error) {
+    throw error;
+  }
+
+  return mapUserProfile(data);
+}
+
+export async function listProjects(): Promise<Project[]> {
+  const supabase = await createSupabaseServerClient();
+  const user = await getCurrentSupabaseUser();
+
+  if (!supabase || !user) {
+    return demoProjects;
+  }
+
+  const { data, error } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .returns<ProjectRow[]>();
+
+  if (error) {
+    console.error("Failed to list projects", error);
+    return [];
+  }
+
+  return (data ?? []).map(mapProject);
+}
+
+export async function createProject(input: {
+  title: string;
+  slug: string;
+  description: string;
+}): Promise<Project> {
+  const supabase = await createSupabaseServerClient();
+  const user = await getCurrentSupabaseUser();
+
+  if (!supabase || !user) {
+    throw new Error("You must be signed in to create a project.");
+  }
+
+  await ensureCurrentUserProfile();
+
+  const { data, error } = await supabase
+    .from("projects")
+    .insert({
+      user_id: user.id,
+      title: input.title,
+      slug: input.slug,
+      description: input.description
+    })
+    .select("*")
+    .single<ProjectRow>();
+
+  if (error) {
+    throw error;
+  }
+
+  return mapProject(data);
+}
+
+export async function getProjectById(projectId: string): Promise<MuseumProjectBundle | undefined> {
+  const supabase = await createSupabaseServerClient();
+
+  if (!supabase) {
+    return demoBundle.project.id === projectId ? demoBundle : undefined;
+  }
+
+  const { data } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("id", projectId)
+    .maybeSingle<ProjectRow>();
+
+  if (!data) {
+    return demoBundle.project.id === projectId ? demoBundle : undefined;
+  }
+
+  return fetchProjectBundle(data);
+}
+
+export async function getProjectBySlug(slug: string): Promise<MuseumProjectBundle | undefined> {
+  const supabase = await createSupabaseServerClient();
+
+  if (!supabase) {
+    return demoBundle.project.slug === slug ? demoBundle : undefined;
+  }
+
+  const { data: publishedPage } = await supabase
+    .from("published_pages")
+    .select("*")
+    .eq("slug", slug)
+    .maybeSingle<PublishedPageRow>();
+
+  if (!publishedPage) {
+    return demoBundle.project.slug === slug ? demoBundle : undefined;
+  }
+
+  const { data: project } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("id", publishedPage.project_id)
+    .maybeSingle<ProjectRow>();
+
+  if (!project) {
+    return undefined;
+  }
+
+  const bundle = await fetchProjectBundle(project);
+
+  if (!bundle) {
+    return undefined;
+  }
+
+  return {
+    ...bundle,
+    publishedPage: mapPublishedPage(publishedPage)
+  };
 }

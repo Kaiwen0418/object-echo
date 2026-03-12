@@ -8,7 +8,7 @@ export default async function MuseumPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const bundle = getProjectBySlug(slug);
+  const bundle = await getProjectBySlug(slug);
 
   if (!bundle) notFound();
 

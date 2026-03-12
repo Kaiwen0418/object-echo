@@ -80,6 +80,12 @@ textarea {
   margin-bottom: 32px;
 }
 
+.site-header-stack {
+  display: grid;
+  gap: 12px;
+  justify-items: end;
+}
+
 .site-brand {
   font-family: "Press Start 2P", monospace;
   font-size: 14px;
@@ -187,6 +193,26 @@ textarea {
 
 .auth-shell {
   width: min(560px, 100%);
+}
+
+.auth-status {
+  min-width: 240px;
+  max-width: min(100%, 360px);
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.auth-status-line {
+  font-family: "Orbitron", sans-serif;
+  font-size: 16px;
+}
+
+.auth-status-subline {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 14px;
+  word-break: break-all;
 }
 
 .auth-button {
@@ -615,6 +641,15 @@ textarea {
 }
 
 @media (max-width: 1100px) {
+  .site-header {
+    align-items: flex-start;
+  }
+
+  .site-header-stack {
+    justify-items: stretch;
+    width: 100%;
+  }
+
   .hero-meta {
     flex-direction: column;
   }

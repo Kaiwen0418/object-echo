@@ -9,7 +9,7 @@ export default async function DevicesPage({
   params: Promise<{ projectId: string }>;
 }) {
   const { projectId } = await params;
-  const bundle = getProjectById(projectId);
+  const bundle = await getProjectById(projectId);
 
   if (!bundle) notFound();
 
