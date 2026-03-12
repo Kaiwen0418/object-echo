@@ -4,6 +4,10 @@ import { redirect } from "next/navigation";
 import { createProject } from "@/lib/utils/project";
 
 export type CreateProjectState = {
+  fieldErrors?: {
+    title?: string;
+    slug?: string;
+  };
   error?: string;
 };
 
@@ -25,11 +29,11 @@ export async function createProjectAction(
   const slug = slugify(slugInput || title);
 
   if (!title) {
-    return { error: "Project title is required." };
+    return { fieldErrors: { title: "Project title is required." } };
   }
 
   if (!slug) {
-    return { error: "Slug is required." };
+    return { fieldErrors: { slug: "Slug is required." } };
   }
 
   try {
@@ -44,7 +48,7 @@ export async function createProjectAction(
     const message = error instanceof Error ? error.message : "Failed to create project.";
 
     if (message.includes("duplicate key") || message.includes("projects_slug_key")) {
-      return { error: "That slug is already in use." };
+      return { fieldErrors: { slug: "That slug is already in use." } };
     }
 
     return { error: message };
