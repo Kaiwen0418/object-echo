@@ -1,10 +1,7 @@
 .site-shell {
   min-height: 100vh;
   padding: 20px var(--marketing-frame-x) 64px;
-  background:
-    radial-gradient(circle at 50% 0%, color-mix(in oklab, var(--bg) 98%, black 2%) 0%, transparent 52%),
-    repeating-linear-gradient(180deg, color-mix(in oklab, var(--text) 1.6%, transparent) 0 1px, transparent 1px 3px),
-    var(--bg);
+  background: var(--bg);
 }
 
 .site-header,
@@ -29,10 +26,10 @@
   width: 100%;
   margin: 0 0 24px;
   padding: 20px 24px;
-  border: 1px solid var(--border);
-  border-bottom-color: color-mix(in oklab, var(--text) 20%, transparent);
-  background: color-mix(in oklab, var(--bg) 97%, transparent);
-  backdrop-filter: blur(8px);
+  border: 0;
+  border-bottom: 1px solid color-mix(in oklab, var(--text) 22%, transparent);
+  background: transparent;
+  backdrop-filter: none;
   overflow: hidden;
 }
 
@@ -65,8 +62,7 @@
 }
 
 .site-header-frame {
-  position: absolute;
-  inset: 0;
+  display: none;
 }
 
 .frame-mark {
@@ -110,7 +106,7 @@
   position: absolute;
   inset: 0 auto 0 33%;
   width: 1px;
-  background: var(--border);
+  background: color-mix(in oklab, var(--text) 10%, transparent);
 }
 
 .site-header-side {
@@ -374,6 +370,7 @@ body.dark .auth-status-trigger:hover {
 .theme-toggle-thumb {
   position: absolute;
   top: 2px;
+  left: 2px;
   width: 14px;
   height: 12px;
   background: var(--text);
@@ -381,11 +378,11 @@ body.dark .auth-status-trigger:hover {
 }
 
 .theme-toggle-thumb.is-light {
-  transform: translateX(2px);
+  transform: translateX(0);
 }
 
 .theme-toggle-thumb.is-dark {
-  transform: translateX(24px);
+  transform: translateX(22px);
 }
 
 .theme-toggle-label {

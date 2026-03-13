@@ -10,6 +10,7 @@ type HomeHeroProps = {
 export function HomeHero({ opacity, isActive, onEnter }: HomeHeroProps) {
   return (
     <section className="home-hero" style={{ opacity }}>
+      <div className="home-hero-backdrop" aria-hidden="true" />
       <HomeHeroScene />
       <div className="home-hero-vignette" aria-hidden="true" />
       <div className="home-hero-ui" aria-hidden="true">
@@ -36,10 +37,7 @@ export function HomeHero({ opacity, isActive, onEnter }: HomeHeroProps) {
             <button type="button" className="hero-primary-button" onClick={onEnter}>
               Enter Demo
             </button>
-            <div className="home-hero-metadata">
-              <span>FORMAT: HERO LANDING INTERFACE</span>
-              <span>MODE: LIGHT / DARK</span>
-            </div>
+
           </div>
         </div>
       </div>

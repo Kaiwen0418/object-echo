@@ -9,6 +9,12 @@ type HeaderLink = {
   tone?: "default" | "primary";
 };
 
+export const GLOBAL_HEADER_LINKS: HeaderLink[] = [
+  { href: "/", label: "Home" },
+  { href: "/dashboard/new", label: "Create", tone: "primary" },
+  { href: "/about", label: "About" }
+];
+
 type AppHeaderProps = {
   brandHref?: Route;
   links?: HeaderLink[];
@@ -56,7 +62,7 @@ export async function AppHeader({
             </Link>
           ))}
         </nav>
-        {isMarketing ? <ThemeToggle /> : null}
+        <ThemeToggle />
         <AuthStatus compact />
       </div>
     </header>
