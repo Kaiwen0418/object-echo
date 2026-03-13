@@ -15,6 +15,7 @@ type HomeMuseumShowcaseProps = {
 };
 
 const HERO_DEVICE_INDEX = 1;
+const THEME_STORAGE_KEY = "object-echo-theme";
 
 export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
   const devices = useMemo(() => sortDevices(bundle), [bundle]);
@@ -30,7 +31,11 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
 
   useEffect(() => {
     setViewportHeight(window.innerHeight);
-    document.body.classList.remove("dark");
+    const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+    const wantsDark = savedTheme ? savedTheme === "dark" : bundle.publishedPage.theme.darkModeDefault;
+
+    document.body.classList.toggle("dark", wantsDark);
+    window.dispatchEvent(new Event("object-echo-themechange"));
   }, []);
 
   useEffect(() => {
@@ -154,7 +159,7 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
 
   return (
     <div className="page home-showcase">
-      <canvas ref={canvasRef} className="bg-canvas home-bg-canvas" />
+      <canvas ref={canvasRef} className="bg-canvas home-bg-canvas" style={{ opacity: museumOpacity }} />
 
       <HomeHero opacity={heroOpacity} isActive={heroIsActive} onEnter={enterMuseum} />
 

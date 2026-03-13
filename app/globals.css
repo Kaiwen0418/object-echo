@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Orbitron:wght@500;700;800&family=Space+Mono:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Press+Start+2P&family=VT323&family=Orbitron:wght@500;700;800&family=Space+Mono:wght@400;700&display=swap");
 @import "./styles/header.css";
 @import "./styles/marketing.css";
 @import "./styles/dashboard.css";
@@ -6,24 +6,25 @@
 @import "./styles/forms.css";
 
 :root {
-  --bg: #e6e9f1;
-  --text: #101522;
-  --card: rgba(255, 255, 255, 0.76);
-  --border: rgba(148, 163, 184, 0.35);
-  --muted: #64748b;
-  --soft: rgba(248, 250, 252, 0.72);
-  --accent: #18223d;
+  --bg: #f4f4f4;
+  --text: #000000;
+  --card: rgba(244, 244, 244, 0.82);
+  --border: rgba(0, 0, 0, 0.18);
+  --muted: #555555;
+  --soft: rgba(255, 255, 255, 0.72);
+  --accent: #000000;
   --max-width: 1180px;
+  --marketing-frame-x: clamp(14px, 3vw, 24px);
 }
 
 body.dark {
-  --bg: #040916;
-  --text: #e5ecff;
-  --card: rgba(11, 18, 32, 0.72);
-  --border: rgba(74, 93, 132, 0.55);
-  --muted: #8aa0c9;
-  --soft: rgba(25, 34, 56, 0.7);
-  --accent: #dfe8ff;
+  --bg: #000000;
+  --text: #ffffff;
+  --card: rgba(0, 0, 0, 0.76);
+  --border: rgba(0, 255, 65, 0.22);
+  --muted: #888888;
+  --soft: rgba(0, 255, 65, 0.08);
+  --accent: #ff00aa;
 }
 
 * {
@@ -48,6 +49,7 @@ html {
 body {
   min-height: 100vh;
   overscroll-behavior-y: none;
+  transition: background-color 0.28s ease, color 0.28s ease;
 }
 
 a {
