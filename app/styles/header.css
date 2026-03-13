@@ -149,6 +149,10 @@
   z-index: 1;
 }
 
+.marketing-header .site-header-actions {
+  position: static;
+}
+
 .site-brand {
   display: inline-flex;
   align-items: center;
@@ -176,9 +180,13 @@
 }
 
 .site-nav {
+  position: absolute;
+  left: 50%;
+  top: 50%;
   display: flex;
   gap: 18px;
   flex-wrap: wrap;
+  transform: translate(-50%, -50%);
 }
 
 .nav-link,
@@ -407,7 +415,11 @@ body.dark .auth-status-trigger:hover {
   }
 
   .site-nav {
+    position: static;
+    top: auto;
+    left: auto;
     width: 100%;
+    transform: none;
     justify-content: space-between;
   }
 

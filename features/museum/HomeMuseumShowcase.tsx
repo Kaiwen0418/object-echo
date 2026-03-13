@@ -179,16 +179,30 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
       <HomeHero opacity={heroOpacity} isActive={heroIsActive} onEnter={enterMuseum} />
 
       <main
-        className="layout overlay"
+        className="museum-device-shell overlay"
         style={{ opacity: museumOpacity, pointerEvents: museumOpacity > 0.4 ? "auto" : "none" }}
       >
-        <section className="left-rail">
-          <section className="spec-left" style={{ transform: `translateY(${leftMotionY}px)`, opacity: leftMotionGlow }}>
-            <p className="small-caption">{bundle.publishedPage.theme.timelineLabel}</p>
-            <h1 key={`title-${cardAnimKey}`} className="model-title fade-card">
+        <aside className="museum-device-timeline">
+          <MuseumTimeline
+            devices={devices}
+            centeredIndex={centeredIndex}
+            displayedProgress={displayedProgress}
+            onJump={jumpToDevice}
+          />
+        </aside>
+
+        <section className="museum-device-stage">
+          <div className="museum-device-backword" aria-hidden="true">
+            {current.name}
+          </div>
+          <div className="museum-device-accent-shape" aria-hidden="true" />
+          <div className="museum-device-copy" style={{ transform: `translateY(${leftMotionY}px)`, opacity: leftMotionGlow }}>
+            <p className="small-caption museum-device-kicker">{bundle.publishedPage.theme.timelineLabel}</p>
+            <h1 key={`title-${cardAnimKey}`} className="museum-device-title fade-card">
               <ScrambleText active={museumOpacity > 0.4} replayToken={cardAnimKey} text={current.name} settleDurationMs={720} />
             </h1>
-            <p key={`summary-${cardAnimKey}`} className="model-summary fade-card">
+            <p className="museum-device-era fade-card">{current.era}</p>
+            <p key={`summary-${cardAnimKey}`} className="museum-device-summary fade-card">
               <ScrambleText
                 active={museumOpacity > 0.4}
                 replayToken={`summary-${cardAnimKey}`}
@@ -197,25 +211,49 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
                 settleDurationMs={980}
               />
             </p>
+          </div>
+        </section>
+
+        <aside className="museum-device-panel">
+          <section className="museum-spec-card museum-spec-card-highlight">
+            <div className="museum-spec-header">
+              <div>
+                <div className="museum-spec-label">Device</div>
+                <div className="museum-spec-value">{current.name}</div>
+              </div>
+              <div className="museum-spec-badge museum-spec-badge-highlight">{current.year}</div>
+            </div>
+            <p className="museum-spec-description">{current.era}</p>
           </section>
 
-          <MuseumTimeline
-            devices={devices}
-            centeredIndex={centeredIndex}
-            displayedProgress={displayedProgress}
-            onJump={jumpToDevice}
-          />
-        </section>
-      </main>
+          <section className="museum-spec-card">
+            <div className="museum-spec-header">
+              <div>
+                <div className="museum-spec-label">Specifications</div>
+                <div className="museum-spec-value">Core Details</div>
+              </div>
+            </div>
+            <div className="museum-spec-list">
+              {current.specs.map((item) => (
+                <div key={`${current.id}-${item.label}`} className="museum-spec-item">
+                  <span className="museum-spec-item-label">{item.label}</span>
+                  <span className="museum-spec-item-value">{item.value}</span>
+                </div>
+              ))}
+            </div>
+          </section>
 
-      <NowPlayingCard
-        device={current}
-        theme={bundle.publishedPage.theme}
-        museumOpacity={museumOpacity}
-        motionY={playerMotionY}
-        glow={playerMotionGlow}
-        cardKey={cardAnimKey}
-      />
+          <NowPlayingCard
+            device={current}
+            theme={bundle.publishedPage.theme}
+            museumOpacity={museumOpacity}
+            motionY={playerMotionY}
+            glow={playerMotionGlow}
+            cardKey={cardAnimKey}
+            variant="panel"
+          />
+        </aside>
+      </main>
 
       <section className="scroll-track">
         <section className="hero-spacer" aria-hidden="true" />

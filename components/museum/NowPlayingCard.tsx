@@ -8,6 +8,7 @@ type NowPlayingCardProps = {
   motionY: number;
   glow: number;
   cardKey: number;
+  variant?: "floating" | "panel";
 };
 
 export function NowPlayingCard({
@@ -16,19 +17,20 @@ export function NowPlayingCard({
   museumOpacity,
   motionY,
   glow,
-  cardKey
+  cardKey,
+  variant = "floating"
 }: NowPlayingCardProps) {
   return (
     <section
-      className="player-right card-xl player-layer"
+      className={`player-right card-xl ${variant === "panel" ? "player-panel" : "player-layer"}`}
       key={`player-${cardKey}`}
       style={{
-        transform: `translateY(calc(-50% + ${motionY}px))`,
+        transform: variant === "panel" ? `translateY(${motionY * 0.2}px)` : `translateY(calc(-50% + ${motionY}px))`,
         opacity: glow * museumOpacity,
         pointerEvents: museumOpacity > 0.4 ? "auto" : "none"
       }}
     >
-      <div className="small-caption">NOW PLAYING</div>
+      <div className="small-caption">{variant === "panel" ? "SOUNDTRACK" : "NOW PLAYING"}</div>
       <div className="player-wrap">
         {/* TODO: Replace demo artwork/music metadata with project-linked assets. */}
         <Image
