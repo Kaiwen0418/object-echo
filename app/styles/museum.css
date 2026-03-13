@@ -408,35 +408,15 @@
   align-items: flex-start;
   justify-content: flex-start;
   padding: 56px 48px 48px;
+  isolation: isolate;
 }
 
 .museum-device-backword {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -52%);
-  font-family: "Orbitron", sans-serif;
-  font-size: clamp(72px, 13vw, 220px);
-  font-weight: 800;
-  line-height: 0.82;
-  letter-spacing: -0.06em;
-  color: color-mix(in oklab, var(--text) 4%, transparent);
-  text-transform: uppercase;
-  white-space: nowrap;
-  pointer-events: none;
+  display: none;
 }
 
-.museum-device-accent-shape {
-  position: absolute;
-  top: 50%;
-  left: 56%;
-  width: min(26vw, 380px);
-  height: min(50vh, 560px);
-  transform: translate(-50%, -50%) rotate(12deg);
-  background: color-mix(in oklab, var(--accent) 72%, #fa4616 28%);
-  opacity: 0.16;
-  box-shadow: 0 0 100px color-mix(in oklab, var(--accent) 18%, transparent);
-  pointer-events: none;
+.museum-device-accent-layer {
+  display: none;
 }
 
 .museum-device-copy {
@@ -444,6 +424,10 @@
   z-index: 4;
   max-width: 360px;
   margin-top: 12px;
+}
+
+.museum-device-copy-svg {
+  max-width: 560px;
 }
 
 .museum-device-kicker {
@@ -475,6 +459,42 @@
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+.museum-device-shell-svg .museum-device-stage {
+  overflow: visible;
+  padding-right: 20px;
+}
+
+.museum-device-shell-svg .museum-device-copy {
+  width: min(56vw, 560px);
+}
+
+.museum-device-shell-svg .museum-device-kicker,
+.museum-device-shell-svg .museum-device-title,
+.museum-device-shell-svg .museum-device-era,
+.museum-device-shell-svg .museum-device-summary {
+  position: relative;
+  z-index: 6;
+  mix-blend-mode: difference;
+}
+
+.museum-device-shell-svg .museum-device-kicker {
+  color: #66d7ff;
+  max-width: 26ch;
+}
+
+.museum-device-shell-svg .museum-device-title {
+  color: #f4f4f4;
+}
+
+.museum-device-shell-svg .museum-device-era {
+  color: #ff6f35;
+}
+
+.museum-device-shell-svg .museum-device-summary {
+  max-width: 42ch;
+  color: #d9d9d9;
 }
 
 .museum-device-panel {
@@ -549,6 +569,31 @@
   display: grid;
   gap: 10px;
   margin-top: 16px;
+}
+
+.museum-control-list {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.museum-control {
+  display: grid;
+  gap: 10px;
+}
+
+.museum-control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.museum-control-slider {
+  width: 100%;
+  margin: 0;
+  accent-color: color-mix(in oklab, var(--accent) 58%, #ff5a1f 42%);
+  cursor: ew-resize;
 }
 
 .museum-spec-item {
@@ -701,6 +746,13 @@
   .museum-device-stage {
     min-height: 46vh;
     padding: 28px 24px 12px;
+  }
+
+  .museum-device-accent-layer {
+    top: calc(72px + 42vh);
+    left: 52%;
+    width: min(42vw, 280px);
+    height: min(42vh, 420px);
   }
 
   .museum-device-backword {

@@ -11,6 +11,76 @@ export type ProgressCanvas = HTMLCanvasElement & {
   __updateProgress?: (value: number) => void;
 };
 
+function createSvgCardTexture(darkMode: boolean) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1400;
+  canvas.height = 2200;
+  const context = canvas.getContext("2d");
+  if (!context) return null;
+
+  const base = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+  base.addColorStop(0, darkMode ? "#ff6a20" : "#ff6d1f");
+  base.addColorStop(0.45, darkMode ? "#ff4a16" : "#ff5620");
+  base.addColorStop(1, darkMode ? "#df210f" : "#e53016");
+  context.fillStyle = base;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 8;
+  texture.generateMipmaps = true;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  return texture;
+}
+
+function createSvgBackdropGroup(darkMode: boolean) {
+  const group = new THREE.Group();
+  const cardTexture = createSvgCardTexture(darkMode);
+  const materials: THREE.Material[] = [];
+  const cardTilt = -0.24;
+
+  const cardCore = new THREE.Mesh(
+    new THREE.BoxGeometry(2.48, 2.62, 0.08),
+    new THREE.MeshStandardMaterial({
+      color: darkMode ? "#ff4816" : "#ff5421",
+      roughness: 0.98,
+      metalness: 0
+    })
+  );
+  cardCore.rotation.z = cardTilt;
+  cardCore.position.set(0, 0, -0.1);
+  group.add(cardCore);
+  materials.push(cardCore.material);
+
+  if (cardTexture) {
+    const cardFace = new THREE.Mesh(
+      new THREE.PlaneGeometry(2.5, 3.64),
+      new THREE.MeshBasicMaterial({
+        map: cardTexture,
+        transparent: false,
+        depthWrite: false
+      })
+    );
+    cardFace.rotation.z = cardTilt;
+    cardFace.position.set(0, 0, -0.05);
+    group.add(cardFace);
+    materials.push(cardFace.material);
+  }
+
+  group.userData.disposeBackdrop = () => {
+    cardTexture?.dispose();
+    materials.forEach((material) => material.dispose());
+  };
+  group.traverse((child: THREE.Object3D) => {
+    if (child instanceof THREE.Mesh) {
+      child.castShadow = false;
+      child.receiveShadow = false;
+    }
+  });
+  return group;
+}
+
 function setObjectOpacity(root: THREE.Object3D, opacity: number) {
   root.traverse((child: THREE.Object3D) => {
     if (!(child instanceof THREE.Mesh) || !child.material) return;
@@ -73,6 +143,126 @@ function tuneModelMaterials(root: THREE.Object3D, darkMode: boolean, config?: Re
   });
 }
 
+function createSvgModelObject(
+  device: ProjectDevice,
+  path: string,
+  config: NonNullable<ReturnType<typeof getMuseumSceneModelConfig>>,
+  darkMode: boolean,
+  onLoad: (group: THREE.Group) => void
+) {
+  const image = new Image();
+  image.decoding = "async";
+  image.src = path;
+
+  image.onload = () => {
+    const svgWidth = image.naturalWidth || 300;
+    const svgHeight = image.naturalHeight || 400;
+    const scaleFactor = 6;
+    const canvas = document.createElement("canvas");
+    canvas.width = svgWidth * scaleFactor;
+    canvas.height = svgHeight * scaleFactor;
+    const context = canvas.getContext("2d");
+    if (!context) return;
+
+    context.imageSmoothingEnabled = true;
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.anisotropy = 8;
+    texture.generateMipmaps = true;
+    texture.minFilter = THREE.LinearMipmapLinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+
+    const group = new THREE.Group();
+    const backdrop = createSvgBackdropGroup(darkMode);
+    backdrop.position.set(0, 0, -0.08);
+    group.add(backdrop);
+
+    const shadowCanvas = document.createElement("canvas");
+    shadowCanvas.width = canvas.width;
+    shadowCanvas.height = canvas.height;
+    const shadowContext = shadowCanvas.getContext("2d");
+    let shadowTexture: THREE.CanvasTexture | null = null;
+
+    if (shadowContext) {
+      shadowContext.clearRect(0, 0, shadowCanvas.width, shadowCanvas.height);
+      shadowContext.filter = `brightness(0) saturate(0) blur(${24 * scaleFactor}px)`;
+      shadowContext.drawImage(
+        image,
+        shadowCanvas.width * 0.06,
+        shadowCanvas.height * 0.1,
+        shadowCanvas.width * 0.88,
+        shadowCanvas.height * 0.88
+      );
+      shadowContext.filter = "none";
+      shadowContext.globalCompositeOperation = "source-in";
+      shadowContext.fillStyle = "#ffffff";
+      shadowContext.fillRect(0, 0, shadowCanvas.width, shadowCanvas.height);
+      shadowContext.globalCompositeOperation = "source-over";
+
+      shadowTexture = new THREE.CanvasTexture(shadowCanvas);
+      shadowTexture.colorSpace = THREE.NoColorSpace;
+      shadowTexture.anisotropy = 8;
+      shadowTexture.generateMipmaps = true;
+      shadowTexture.minFilter = THREE.LinearMipmapLinearFilter;
+      shadowTexture.magFilter = THREE.LinearFilter;
+    }
+
+    if (shadowTexture) {
+      const shadowMesh = new THREE.Mesh(
+        new THREE.PlaneGeometry(config.planeWidth ?? 1.2, config.planeHeight ?? 2.4),
+        new THREE.MeshBasicMaterial({
+          map: shadowTexture,
+          color: "#000000",
+          transparent: true,
+          depthWrite: false,
+          opacity: darkMode ? 0.5 : 0.28
+        })
+      );
+      shadowMesh.position.set(0.1, -0.18, 0.01);
+      shadowMesh.rotation.z = -0.01;
+      shadowMesh.renderOrder = 1;
+      shadowMesh.castShadow = false;
+      shadowMesh.receiveShadow = false;
+      group.add(shadowMesh);
+      group.userData.svgShadow = shadowMesh;
+      group.userData.svgShadowBaseScale = shadowMesh.scale.clone();
+    }
+
+    const mesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(config.planeWidth ?? 1.2, config.planeHeight ?? 2.4),
+      new THREE.MeshStandardMaterial({
+        map: texture,
+        transparent: true,
+        alphaTest: 0.02,
+        side: THREE.DoubleSide,
+        roughness: 0.96,
+        metalness: 0,
+        emissive: new THREE.Color(darkMode ? "#0f1730" : "#111111"),
+        emissiveIntensity: darkMode ? 0.08 : 0.02
+      })
+    );
+
+    mesh.castShadow = false;
+    mesh.receiveShadow = false;
+    mesh.position.z = 0.04;
+    mesh.renderOrder = 2;
+    group.add(mesh);
+    group.userData.svgPlane = mesh;
+    group.userData.svgPlaneBaseScale = mesh.scale.clone();
+    group.userData.svgBackdrop = backdrop;
+    group.userData.svgBackdropBaseScale = backdrop.scale.clone();
+    group.userData.disposeTexture = () => {
+      texture.dispose();
+      shadowTexture?.dispose();
+      (backdrop.userData.disposeBackdrop as (() => void) | undefined)?.();
+    };
+    onLoad(group);
+  };
+}
+
 export function useMuseumScene(
   canvasRef: RefObject<ProgressCanvas | null>,
   bundle: MuseumProjectBundle,
@@ -82,6 +272,8 @@ export function useMuseumScene(
     heroFocusIndex?: number;
     heroSpinStrength?: number;
     heroSpinCutoff?: number;
+    modelScaleMultiplier?: number;
+    svgCardScaleMultiplier?: number;
   }
 ) {
   const targetProgressRef = useRef(progress);
@@ -121,6 +313,10 @@ export function useMuseumScene(
     fill.position.set(-5, 2, 4);
     scene.add(fill);
 
+    const svgAccentLight = new THREE.PointLight(darkMode ? "#7ea2ff" : "#ffffff", 0, 10, 2);
+    svgAccentLight.position.set(0, 0, 2.4);
+    scene.add(svgAccentLight);
+
     const shadowPlane = new THREE.Mesh(
       new THREE.PlaneGeometry(22, 14),
       new THREE.ShadowMaterial({ color: "#94a3b8", opacity: darkMode ? 0 : 0.2 })
@@ -143,6 +339,7 @@ export function useMuseumScene(
     const loadingPlaceholders: Array<THREE.Group | null> = [];
     const pendingModelFades: Array<THREE.Group | null> = [];
     const modelFadeProgress: number[] = [];
+    const renderKinds: Array<"gltf" | "svg"> = [];
     const loader = new GLTFLoader();
     let isDisposed = false;
 
@@ -162,7 +359,31 @@ export function useMuseumScene(
       modelFadeProgress.push(0);
 
       const config = getMuseumSceneModelConfig(device);
+      renderKinds.push(config?.kind ?? "gltf");
       if (!config) return;
+
+      if (config.kind === "svg") {
+        createSvgModelObject(device, config.path, config, darkMode, (modelGroup) => {
+          if (isDisposed) return;
+
+          modelGroup.position.y = -index * spacing;
+          modelGroup.position.y += config.lift;
+          modelGroup.position.x += config.offsetX ?? 0;
+          modelGroup.rotation.y = config.yaw ?? 0;
+          modelGroup.rotation.x = config.pitch ?? 0;
+          modelGroup.userData.renderKind = "svg";
+          modelGroup.userData.disableShadows = true;
+          modelGroup.userData.basePosition = modelGroup.position.clone();
+          modelGroup.userData.baseScale = modelGroup.scale.clone();
+
+          setObjectOpacity(modelGroup, 0);
+          rail.add(modelGroup);
+          deviceMeshes[index] = modelGroup;
+          pendingModelFades[index] = modelGroup;
+          modelFadeProgress[index] = 0;
+        });
+        return;
+      }
 
       loader.load(
         config.path,
@@ -204,6 +425,10 @@ export function useMuseumScene(
 
           modelGroup.add(model);
           modelGroup.position.y = -index * spacing;
+          modelGroup.userData.renderKind = "gltf";
+          modelGroup.userData.disableShadows = false;
+          modelGroup.userData.basePosition = modelGroup.position.clone();
+          modelGroup.userData.baseScale = modelGroup.scale.clone();
           setObjectOpacity(modelGroup, 0);
           rail.add(modelGroup);
           deviceMeshes[index] = modelGroup;
@@ -235,6 +460,8 @@ export function useMuseumScene(
     let velocity = 0;
 
     const tick = () => {
+      const modelScaleMultiplier = options?.modelScaleMultiplier ?? 1;
+      const svgCardScaleMultiplier = options?.svgCardScaleMultiplier ?? 1;
       const delta = targetProgressRef.current - currentProgress;
       velocity = velocity * 0.8 + delta * 0.022;
       velocity = clamp(velocity, -0.08, 0.08);
@@ -250,6 +477,7 @@ export function useMuseumScene(
       darkBackdropPlane.receiveShadow = darkMode;
       darkBackdropPlane.position.set(-0.8, 0.1, -1.65);
       (darkBackdropPlane.material as THREE.ShadowMaterial).opacity = darkMode ? 0.12 : 0;
+      svgAccentLight.intensity = 0;
 
       loadingPlaceholders.forEach((placeholder, index) => {
         if (!placeholder) return;
@@ -257,7 +485,7 @@ export function useMuseumScene(
         const focus = 1 - clamp(Math.abs(local), 0, 1);
         const pulse = 1 + Math.sin(performance.now() * 0.008 + index * 1.1) * 0.26;
         const settle = 0.28 + focus * 0.24;
-        placeholder.scale.setScalar(1.22 * pulse * settle);
+        placeholder.scale.setScalar(1.22 * pulse * settle * modelScaleMultiplier);
       });
 
       pendingModelFades.forEach((modelGroup, index) => {
@@ -266,6 +494,17 @@ export function useMuseumScene(
         const nextOpacity = Math.min(modelFadeProgress[index] + 0.06, 1);
         modelFadeProgress[index] = nextOpacity;
         setObjectOpacity(modelGroup, nextOpacity);
+
+        const basePosition = modelGroup.userData.basePosition as THREE.Vector3 | undefined;
+        const renderKind = modelGroup.userData.renderKind as "gltf" | "svg" | undefined;
+        if (basePosition) {
+          modelGroup.position.copy(basePosition);
+          if (renderKind === "svg") {
+            modelGroup.position.y = basePosition.y - (1 - nextOpacity) * 0.24;
+            modelGroup.position.z = -(1 - nextOpacity) * 0.18;
+          }
+        }
+        modelGroup.userData.introScale = renderKind === "svg" ? 0.84 + nextOpacity * 0.16 : 1;
 
         const placeholder = loadingPlaceholders[index];
         if (placeholder) {
@@ -287,11 +526,41 @@ export function useMuseumScene(
         const local = currentProgress - index;
         const nearCenter = 1 - clamp(Math.abs(local), 0, 1);
         const shadowActive = Math.abs(local) < 0.55;
+        const disableShadows = mesh.userData.disableShadows === true;
+        const renderKind = mesh.userData.renderKind as "gltf" | "svg" | undefined;
+        const baseScale = mesh.userData.baseScale as THREE.Vector3 | undefined;
+        const introScale = (mesh.userData.introScale as number | undefined) ?? 1;
+        const svgPlane = mesh.userData.svgPlane as THREE.Object3D | undefined;
+        const svgPlaneBaseScale = mesh.userData.svgPlaneBaseScale as THREE.Vector3 | undefined;
+        const svgShadow = mesh.userData.svgShadow as THREE.Object3D | undefined;
+        const svgShadowBaseScale = mesh.userData.svgShadowBaseScale as THREE.Vector3 | undefined;
+        const svgBackdrop = mesh.userData.svgBackdrop as THREE.Object3D | undefined;
+        const svgBackdropBaseScale = mesh.userData.svgBackdropBaseScale as THREE.Vector3 | undefined;
+
+        if (baseScale) {
+          mesh.scale.copy(baseScale);
+          mesh.scale.multiplyScalar(renderKind === "svg" ? introScale : modelScaleMultiplier);
+        }
+
+        if (renderKind === "svg") {
+          if (svgPlane && svgPlaneBaseScale) {
+            svgPlane.scale.copy(svgPlaneBaseScale);
+            svgPlane.scale.multiplyScalar(modelScaleMultiplier);
+          }
+          if (svgShadow && svgShadowBaseScale) {
+            svgShadow.scale.copy(svgShadowBaseScale);
+            svgShadow.scale.multiplyScalar(modelScaleMultiplier);
+          }
+          if (svgBackdrop && svgBackdropBaseScale) {
+            svgBackdrop.scale.copy(svgBackdropBaseScale);
+            svgBackdrop.scale.multiplyScalar(svgCardScaleMultiplier);
+          }
+        }
 
         mesh.traverse((child: THREE.Object3D) => {
           if (child instanceof THREE.Mesh) {
-            child.castShadow = shadowActive;
-            child.receiveShadow = shadowActive;
+            child.castShadow = disableShadows ? false : shadowActive;
+            child.receiveShadow = disableShadows ? false : shadowActive;
           }
         });
 
@@ -306,11 +575,20 @@ export function useMuseumScene(
         mesh.rotation.y = Math.PI * 0.06 * local;
         mesh.position.z = -Math.abs(local) * 0.25;
 
-        if (darkMode && index === Math.round(currentProgress)) {
+        if (darkMode && index === Math.round(currentProgress) && renderKinds[index] !== "svg") {
           darkBackdropPlane.position.x = -0.86 - Math.max(local, -0.35) * 0.24;
           darkBackdropPlane.position.y = 0.08 + nearCenter * 0.05;
           darkBackdropPlane.position.z = -1.68 - Math.min(Math.abs(local), 1) * 0.08;
           (darkBackdropPlane.material as THREE.ShadowMaterial).opacity = 0.22 * nearCenter + 0.04;
+        }
+
+        if (renderKind === "svg" && index === Math.round(currentProgress)) {
+          svgAccentLight.intensity = darkMode ? 0.9 * nearCenter : 0.28 * nearCenter;
+          svgAccentLight.position.set(mesh.position.x + 0.9, mesh.position.y + 0.25, 2.2);
+          if (darkMode) {
+            darkBackdropPlane.visible = false;
+            (darkBackdropPlane.material as THREE.ShadowMaterial).opacity = 0;
+          }
         }
 
         const heroFocusIndex = options?.heroFocusIndex;
@@ -340,9 +618,22 @@ export function useMuseumScene(
       window.removeEventListener("resize", onResize);
       canvas.__updateProgress = undefined;
       (darkBackdropPlane.material as THREE.ShadowMaterial).dispose();
+      deviceMeshes.forEach((mesh) => {
+        const disposeTexture = mesh.userData.disposeTexture as (() => void) | undefined;
+        disposeTexture?.();
+      });
       renderer.dispose();
     };
-  }, [bundle, canvasRef, darkMode, options?.heroFocusIndex, options?.heroSpinCutoff, options?.heroSpinStrength]);
+  }, [
+    bundle,
+    canvasRef,
+    darkMode,
+    options?.heroFocusIndex,
+    options?.heroSpinCutoff,
+    options?.heroSpinStrength,
+    options?.modelScaleMultiplier,
+    options?.svgCardScaleMultiplier
+  ]);
 
   useEffect(() => {
     canvasRef.current?.__updateProgress?.(progress);

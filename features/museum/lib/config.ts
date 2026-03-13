@@ -1,4 +1,5 @@
 import type { MuseumProjectBundle, MuseumSceneModelConfig, ProjectDevice } from "@/types";
+import { getMuseumSvgMarkup } from "@/features/museum/lib/svg-renderers";
 
 export const TIMELINE_DETAIL_TICKS = [-0.8, -0.45, -0.2, 0.35, 0.7, 1.35, 1.7, 2.35, 2.7, 3.2, 3.5, 3.8];
 export const SNAP_THRESHOLD = 1.92;
@@ -7,11 +8,14 @@ export const SNAP_CAPTURE_RADIUS = 0.54;
 
 const MODEL_CONFIGS: Record<string, MuseumSceneModelConfig> = {
   "CASIO F-91W": {
-    path: "/demo/models/casio_f-91w/scene.gltf",
-    scale: 1.7,
+    kind: "svg",
+    path: `data:image/svg+xml;utf8,${encodeURIComponent(getMuseumSvgMarkup("CASIO F-91W") ?? "")}`,
+    scale: 2.5,
     lift: 0.4,
     yaw: Math.PI * 1.22,
-    pitch: Math.PI * 0.5
+    pitch: Math.PI * 0.5,
+    planeWidth: 1.95,
+    planeHeight: 2.6
   },
   "NOKIA 3310": { path: "/demo/models/nokia_3310/scene.gltf", scale: 2.55, lift: 0.04, yaw: Math.PI * 0.14 },
   "SONY WALKMAN": {

@@ -5,7 +5,13 @@ import { HomeHero } from "@/components/marketing/HomeHero";
 import { MuseumTimeline } from "@/components/museum/MuseumTimeline";
 import { NowPlayingCard } from "@/components/museum/NowPlayingCard";
 import { ScrambleText } from "@/components/ui/ScrambleText";
-import { PREVIEW_RANGE, SNAP_CAPTURE_RADIUS, SNAP_THRESHOLD, sortDevices } from "@/features/museum/lib/config";
+import {
+  PREVIEW_RANGE,
+  SNAP_CAPTURE_RADIUS,
+  SNAP_THRESHOLD,
+  getMuseumSceneModelConfig,
+  sortDevices
+} from "@/features/museum/lib/config";
 import { useMuseumScene, type ProgressCanvas } from "@/features/museum/hooks/useMuseumScene";
 import { clamp, smoothstep } from "@/features/museum/lib/math";
 import type { MuseumProjectBundle } from "@/types";
@@ -27,6 +33,8 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
   const [isScrollInteracting, setIsScrollInteracting] = useState(false);
   const [displayedProgress, setDisplayedProgress] = useState(HERO_DEVICE_INDEX);
   const [cardAnimKey, setCardAnimKey] = useState(0);
+  const [modelScale, setModelScale] = useState(1);
+  const [cardScale, setCardScale] = useState(1);
   const canvasRef = useRef<ProgressCanvas | null>(null);
   const scrollIdleTimeoutRef = useRef<number | null>(null);
 
@@ -112,6 +120,7 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
   }, [isInSnapZone, museumReveal, nearestIndex]);
 
   const current = devices[centeredIndex] ?? devices[HERO_DEVICE_INDEX] ?? devices[0];
+  const isSvgDevice = current ? getMuseumSceneModelConfig(current)?.kind === "svg" : false;
 
   useEffect(() => {
     setCardAnimKey((value) => value + 1);
@@ -159,7 +168,9 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
   useMuseumScene(canvasRef, bundle, displayedProgress, isDarkMode, {
     heroFocusIndex: HERO_DEVICE_INDEX,
     heroSpinStrength: 0,
-    heroSpinCutoff: HERO_DEVICE_INDEX + 0.2
+    heroSpinCutoff: HERO_DEVICE_INDEX + 0.2,
+    modelScaleMultiplier: modelScale,
+    svgCardScaleMultiplier: cardScale
   });
 
   const jumpToDevice = (index: number) => {
@@ -175,11 +186,12 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
   return (
     <div className="page home-showcase">
       <canvas ref={canvasRef} className="bg-canvas home-bg-canvas" style={{ opacity: museumOpacity }} />
+      <div className="museum-device-accent-layer" style={{ opacity: museumOpacity }} aria-hidden="true" />
 
       <HomeHero opacity={heroOpacity} isActive={heroIsActive} onEnter={enterMuseum} />
 
       <main
-        className="museum-device-shell overlay"
+        className={`museum-device-shell overlay${isSvgDevice ? " museum-device-shell-svg" : ""}`}
         style={{ opacity: museumOpacity, pointerEvents: museumOpacity > 0.4 ? "auto" : "none" }}
       >
         <aside className="museum-device-timeline">
@@ -191,12 +203,14 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
           />
         </aside>
 
-        <section className="museum-device-stage">
+        <section className={`museum-device-stage${isSvgDevice ? " museum-device-stage-svg" : ""}`}>
           <div className="museum-device-backword" aria-hidden="true">
             {current.name}
           </div>
-          <div className="museum-device-accent-shape" aria-hidden="true" />
-          <div className="museum-device-copy" style={{ transform: `translateY(${leftMotionY}px)`, opacity: leftMotionGlow }}>
+          <div
+            className={`museum-device-copy${isSvgDevice ? " museum-device-copy-svg" : ""}`}
+            style={{ transform: `translateY(${leftMotionY}px)`, opacity: leftMotionGlow }}
+          >
             <p className="small-caption museum-device-kicker">{bundle.publishedPage.theme.timelineLabel}</p>
             <h1 key={`title-${cardAnimKey}`} className="museum-device-title fade-card">
               <ScrambleText active={museumOpacity > 0.4} replayToken={cardAnimKey} text={current.name} settleDurationMs={720} />
@@ -229,17 +243,43 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
           <section className="museum-spec-card">
             <div className="museum-spec-header">
               <div>
-                <div className="museum-spec-label">Specifications</div>
-                <div className="museum-spec-value">Core Details</div>
+                <div className="museum-spec-label">Scene Controls</div>
+                <div className="museum-spec-value">Scale Tuning</div>
               </div>
             </div>
-            <div className="museum-spec-list">
-              {current.specs.map((item) => (
-                <div key={`${current.id}-${item.label}`} className="museum-spec-item">
-                  <span className="museum-spec-item-label">{item.label}</span>
-                  <span className="museum-spec-item-value">{item.value}</span>
+            <div className="museum-control-list">
+              <label className="museum-control">
+                <div className="museum-control-row">
+                  <span className="museum-spec-item-label">Model Size</span>
+                  <span className="museum-spec-item-value">{modelScale.toFixed(2)}x</span>
                 </div>
-              ))}
+                <input
+                  className="museum-control-slider"
+                  type="range"
+                  min="0.7"
+                  max="1.45"
+                  step="0.01"
+                  value={modelScale}
+                  onChange={(event) => setModelScale(Number(event.target.value))}
+                />
+              </label>
+              {isSvgDevice ? (
+                <label className="museum-control">
+                  <div className="museum-control-row">
+                    <span className="museum-spec-item-label">Card Size</span>
+                    <span className="museum-spec-item-value">{cardScale.toFixed(2)}x</span>
+                  </div>
+                  <input
+                    className="museum-control-slider"
+                    type="range"
+                    min="0.7"
+                    max="1.55"
+                    step="0.01"
+                    value={cardScale}
+                    onChange={(event) => setCardScale(Number(event.target.value))}
+                  />
+                </label>
+              ) : null}
             </div>
           </section>
 
