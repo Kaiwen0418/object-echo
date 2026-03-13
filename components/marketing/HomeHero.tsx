@@ -1,14 +1,19 @@
+import { ScrambleText } from "@/components/ui/ScrambleText";
+
 type HomeHeroProps = {
   opacity: number;
+  isActive: boolean;
   onEnter: () => void;
 };
 
-export function HomeHero({ opacity, onEnter }: HomeHeroProps) {
+export function HomeHero({ opacity, isActive, onEnter }: HomeHeroProps) {
   return (
     <section className="home-hero" style={{ opacity }}>
       <div className="home-hero-copy">
         <div className="section-eyebrow">Personal museum builder</div>
-        <h1 className="shell-title">Build a collection page that feels lit, staged, and remembered.</h1>
+        <h1 className="shell-title">
+          <ScrambleText active={isActive} text="Build a collection page that feels lit, staged, and remembered." />
+        </h1>
         <p className="shell-copy">
           Object Echo turns personal devices and media into a cinematic museum timeline. Start with a collection,
           publish a scene, and let the archive unfold as people scroll.

@@ -275,6 +275,182 @@ export async function createProject(input: {
   return mapProject(data);
 }
 
+export async function replaceProjectDevices(
+  projectId: string,
+  devices: Array<{
+    id?: string;
+    name: string;
+    year: number;
+    era?: string;
+    specs?: ProjectDevice["specs"];
+    modelAssetId?: string;
+    musicAssetId?: string;
+    sortOrder: number;
+  }>
+): Promise<ProjectDevice[]> {
+  const supabase = await createSupabaseServerClient();
+  const user = await getCurrentSupabaseUser();
+
+  if (!supabase || !user) {
+    throw new Error("You must be signed in to update devices.");
+  }
+
+  const { data: project, error: projectError } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("id", projectId)
+    .eq("user_id", user.id)
+    .maybeSingle<{ id: string }>();
+
+  if (projectError) {
+    throw projectError;
+  }
+
+  if (!project) {
+    throw new Error("Project not found.");
+  }
+
+  const payload = devices.map((device, index) => ({
+    project_id: projectId,
+    name: device.name,
+    year: device.year,
+    era: device.era ?? "",
+    specs: device.specs ?? [],
+    model_asset_id: device.modelAssetId ?? null,
+    music_asset_id: device.musicAssetId ?? null,
+    sort_order: index
+  }));
+
+  const { error: deleteError } = await supabase.from("project_devices").delete().eq("project_id", projectId);
+
+  if (deleteError) {
+    throw deleteError;
+  }
+
+  if (!payload.length) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("project_devices")
+    .insert(payload)
+    .select("*")
+    .order("sort_order", { ascending: true })
+    .returns<ProjectDeviceRow[]>();
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []).map(mapProjectDevice);
+}
+
+export async function syncProjectAssets(
+  projectId: string,
+  assets: Array<{
+    id?: string;
+    type: ProjectAsset["type"];
+    sourceType: ProjectAsset["sourceType"];
+    sourceUrl?: string;
+    storageKey?: string;
+    title?: string;
+    author?: string;
+    license?: string;
+    attribution?: string;
+  }>
+): Promise<ProjectAsset[]> {
+  const supabase = await createSupabaseServerClient();
+  const user = await getCurrentSupabaseUser();
+
+  if (!supabase || !user) {
+    throw new Error("You must be signed in to update assets.");
+  }
+
+  const { data: project, error: projectError } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("id", projectId)
+    .eq("user_id", user.id)
+    .maybeSingle<{ id: string }>();
+
+  if (projectError) {
+    throw projectError;
+  }
+
+  if (!project) {
+    throw new Error("Project not found.");
+  }
+
+  const { data: existingAssets, error: existingError } = await supabase
+    .from("project_assets")
+    .select("id")
+    .eq("project_id", projectId)
+    .returns<Array<{ id: string }>>();
+
+  if (existingError) {
+    throw existingError;
+  }
+
+  const existingIds = new Set((existingAssets ?? []).map((asset) => asset.id));
+  const retainedIds = new Set(
+    assets
+      .map((asset) => asset.id)
+      .filter((assetId): assetId is string => typeof assetId === "string")
+      .filter((assetId) => existingIds.has(assetId))
+  );
+  const idsToDelete = [...existingIds].filter((id) => !retainedIds.has(id));
+
+  if (idsToDelete.length > 0) {
+    const { error: deleteError } = await supabase.from("project_assets").delete().in("id", idsToDelete);
+
+    if (deleteError) {
+      throw deleteError;
+    }
+  }
+
+  for (const asset of assets) {
+    const payload = {
+      project_id: projectId,
+      type: asset.type,
+      source_type: asset.sourceType,
+      source_url: asset.sourceUrl ?? null,
+      storage_key: asset.storageKey ?? null,
+      title: asset.title ?? null,
+      author: asset.author ?? null,
+      license: asset.license ?? null,
+      attribution: asset.attribution ?? null
+    };
+
+    if (asset.id && existingIds.has(asset.id)) {
+      const { error } = await supabase.from("project_assets").update(payload).eq("id", asset.id).eq("project_id", projectId);
+
+      if (error) {
+        throw error;
+      }
+      continue;
+    }
+
+    const { error } = await supabase.from("project_assets").insert(payload);
+
+    if (error) {
+      throw error;
+    }
+  }
+
+  const { data, error } = await supabase
+    .from("project_assets")
+    .select("*")
+    .eq("project_id", projectId)
+    .order("created_at", { ascending: true })
+    .returns<ProjectAssetRow[]>();
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []).map(mapProjectAsset);
+}
+
 export async function getProjectById(projectId: string): Promise<MuseumProjectBundle | undefined> {
   const supabase = await createSupabaseServerClient();
 

@@ -1,0 +1,227 @@
+.site-shell {
+  min-height: 100vh;
+  padding: 32px 24px 64px;
+  background:
+    radial-gradient(circle at top, color-mix(in oklab, var(--bg) 72%, #1e293b 28%), transparent 40%),
+    repeating-linear-gradient(180deg, rgba(0, 0, 0, 0.02) 0 1px, transparent 1px 3px),
+    var(--bg);
+}
+
+.site-header,
+.shell {
+  width: min(var(--max-width), 100%);
+  margin: 0 auto;
+}
+
+.site-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.marketing-header,
+.dashboard-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  width: auto;
+  margin: 0 clamp(12px, 4vw, 72px) 32px;
+  padding: 14px 0;
+  backdrop-filter: blur(10px);
+}
+
+.marketing-header .nav-link,
+.marketing-header .primary-button,
+.marketing-header .auth-status-trigger,
+.dashboard-header .nav-link,
+.dashboard-header .primary-button,
+.dashboard-header .auth-status-trigger {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.site-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.site-brand {
+  font-family: "Press Start 2P", monospace;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+}
+
+.site-nav {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.nav-link,
+.ghost-button,
+.primary-button {
+  border: 0;
+  padding: 10px 16px;
+  background: color-mix(in oklab, var(--bg) 72%, transparent);
+  backdrop-filter: blur(8px);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.18s ease;
+}
+
+.nav-link:hover,
+.ghost-button:hover,
+.primary-button:hover,
+.auth-status-trigger:hover {
+  background: color-mix(in oklab, white 14%, transparent);
+  transform: translateY(-1px);
+}
+
+.primary-button {
+  background: transparent;
+}
+
+.auth-status {
+  min-width: 240px;
+  max-width: min(100%, 360px);
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.auth-status.compact {
+  min-width: 0;
+  max-width: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.auth-status.compact .inline-actions {
+  gap: 8px;
+}
+
+.auth-status.compact .nav-link {
+  padding: 8px 10px;
+}
+
+.auth-status-line {
+  font-family: "Orbitron", sans-serif;
+  font-size: 16px;
+}
+
+.auth-status-subline {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 14px;
+  word-break: break-all;
+}
+
+.auth-status-guest {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 12px;
+}
+
+.compact-auth-actions .nav-link {
+  padding: 10px 14px;
+}
+
+.auth-status-menu {
+  position: relative;
+}
+
+.auth-status-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 5px 12px 5px 5px;
+  border: 0;
+  background: transparent;
+}
+
+.auth-avatar {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--accent) 18%, white 22%);
+  font-family: "Orbitron", sans-serif;
+  font-size: 14px;
+}
+
+.auth-avatar img {
+  object-fit: cover;
+}
+
+.auth-status-name {
+  max-width: 15ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.auth-status-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  display: grid;
+  gap: 8px;
+  min-width: 196px;
+  padding: 18px 10px 10px;
+  background: color-mix(in oklab, var(--bg) 88%, white 12%);
+  box-shadow: 0 18px 48px rgba(19, 28, 44, 0.16);
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.auth-status-menu:hover .auth-status-dropdown,
+.auth-status-menu:focus-within .auth-status-dropdown {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+@media (max-width: 1100px) {
+  .site-header {
+    align-items: flex-start;
+  }
+
+  .marketing-header {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .site-header-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+  }
+
+  .site-nav {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .auth-status-menu {
+    align-self: flex-end;
+  }
+}

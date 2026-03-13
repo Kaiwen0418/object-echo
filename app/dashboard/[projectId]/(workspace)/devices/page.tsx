@@ -18,7 +18,7 @@ export default async function DevicesPage({
         <div className="section-eyebrow">Editable device list</div>
         <h1>Devices</h1>
       </div>
-      <DevicesEditor initialDevices={bundle.devices} />
+      <DevicesEditor projectId={projectId} initialDevices={bundle.devices} />
     </section>
   );
 }

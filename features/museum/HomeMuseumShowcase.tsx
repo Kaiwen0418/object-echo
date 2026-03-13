@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { HomeHero } from "@/components/marketing/HomeHero";
 import { MuseumTimeline } from "@/components/museum/MuseumTimeline";
 import { NowPlayingCard } from "@/components/museum/NowPlayingCard";
+import { ScrambleText } from "@/components/ui/ScrambleText";
 import { PREVIEW_RANGE, SNAP_CAPTURE_RADIUS, SNAP_THRESHOLD, sortDevices } from "@/features/museum/lib/config";
 import { useMuseumScene, type ProgressCanvas } from "@/features/museum/hooks/useMuseumScene";
 import { clamp, smoothstep } from "@/features/museum/lib/math";
@@ -133,6 +134,7 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
     : "";
   const museumOpacity = smoothstep(0.16, 0.88, museumReveal);
   const heroOpacity = 1 - smoothstep(0.06, 0.78, museumReveal);
+  const heroIsActive = heroOpacity > 0.66;
 
   useMuseumScene(canvasRef, bundle, displayedProgress, false, {
     heroFocusIndex: HERO_DEVICE_INDEX,
@@ -154,7 +156,7 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
     <div className="page home-showcase">
       <canvas ref={canvasRef} className="bg-canvas home-bg-canvas" />
 
-      <HomeHero opacity={heroOpacity} onEnter={enterMuseum} />
+      <HomeHero opacity={heroOpacity} isActive={heroIsActive} onEnter={enterMuseum} />
 
       <main
         className="layout overlay"
@@ -164,10 +166,16 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
           <section className="spec-left" style={{ transform: `translateY(${leftMotionY}px)`, opacity: leftMotionGlow }}>
             <p className="small-caption">{bundle.publishedPage.theme.timelineLabel}</p>
             <h1 key={`title-${cardAnimKey}`} className="model-title fade-card">
-              {current.name}
+              <ScrambleText active={museumOpacity > 0.4} replayToken={cardAnimKey} text={current.name} settleDurationMs={720} />
             </h1>
             <p key={`summary-${cardAnimKey}`} className="model-summary fade-card">
-              {summary}
+              <ScrambleText
+                active={museumOpacity > 0.4}
+                replayToken={`summary-${cardAnimKey}`}
+                text={summary}
+                startDelayMs={80}
+                settleDurationMs={980}
+              />
             </p>
           </section>
 
