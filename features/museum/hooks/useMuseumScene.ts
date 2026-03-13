@@ -11,19 +11,28 @@ export type ProgressCanvas = HTMLCanvasElement & {
   __updateProgress?: (value: number) => void;
 };
 
+function setObjectOpacity(root: THREE.Object3D, opacity: number) {
+  root.traverse((child: THREE.Object3D) => {
+    if (!(child instanceof THREE.Mesh) || !child.material) return;
+
+    const materials = Array.isArray(child.material) ? child.material : [child.material];
+    materials.forEach((material: THREE.Material) => {
+      if (!("opacity" in material)) return;
+      material.transparent = opacity < 0.999;
+      (material as THREE.Material & { opacity: number }).opacity = opacity;
+      material.needsUpdate = true;
+    });
+  });
+}
+
 function createDeviceMesh(device: ProjectDevice, darkMode: boolean) {
   const material = new THREE.MeshStandardMaterial({
     color: darkMode ? "#8ba0bf" : "#34435a",
-    roughness: 0.42,
-    metalness: 0.24
+    roughness: 0.92,
+    metalness: 0.04
   });
 
-  if (device.name.includes("NOKIA")) return new THREE.Mesh(new THREE.BoxGeometry(1.3, 2.5, 0.28), material);
-  if (device.name.includes("WALKMAN")) return new THREE.Mesh(new THREE.BoxGeometry(1.95, 1.25, 0.55), material);
-  if (device.name.includes("IPOD")) return new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.6, 0.3), material);
-  if (device.name.includes("CASIO")) return new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.16, 24, 80), material);
-  if (device.name.includes("GALAXY")) return new THREE.Mesh(new THREE.BoxGeometry(1.25, 2.2, 0.28), material);
-  return new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.5, 0.1), material);
+  return new THREE.Mesh(new THREE.SphereGeometry(0.72, 22, 22), material);
 }
 
 function createDeviceObject(device: ProjectDevice, darkMode: boolean) {
@@ -89,14 +98,14 @@ export function useMuseumScene(
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
     renderer.setClearColor(0x000000, 0);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = !darkMode;
+    renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     scene.add(new THREE.AmbientLight(0xffffff, darkMode ? 0.75 : 0.9));
 
     const key = new THREE.DirectionalLight("#c2d9ff", 1.45);
-    key.position.set(4, 2, 3);
-    key.castShadow = !darkMode;
+    key.position.set(darkMode ? 2.8 : 4, darkMode ? 2.4 : 2, darkMode ? 5.8 : 3);
+    key.castShadow = true;
     key.shadow.mapSize.width = 1024;
     key.shadow.mapSize.height = 1024;
     key.shadow.camera.near = 0.5;
@@ -120,9 +129,20 @@ export function useMuseumScene(
     shadowPlane.receiveShadow = !darkMode;
     scene.add(shadowPlane);
 
+    const darkBackdropPlane = new THREE.Mesh(
+      new THREE.PlaneGeometry(10, 10),
+      new THREE.ShadowMaterial({ color: "#4f78c9", opacity: darkMode ? 0.22 : 0 })
+    );
+    darkBackdropPlane.position.set(-0.8, 0.1, -1.65);
+    darkBackdropPlane.receiveShadow = darkMode;
+    scene.add(darkBackdropPlane);
+
     const rail = new THREE.Group();
     const spacing = 4.2;
     const deviceMeshes: THREE.Group[] = [];
+    const loadingPlaceholders: Array<THREE.Group | null> = [];
+    const pendingModelFades: Array<THREE.Group | null> = [];
+    const modelFadeProgress: number[] = [];
     const loader = new GLTFLoader();
     let isDisposed = false;
 
@@ -137,6 +157,9 @@ export function useMuseumScene(
       });
       rail.add(placeholder);
       deviceMeshes.push(placeholder);
+      loadingPlaceholders.push(placeholder);
+      pendingModelFades.push(null);
+      modelFadeProgress.push(0);
 
       const config = getMuseumSceneModelConfig(device);
       if (!config) return;
@@ -181,9 +204,11 @@ export function useMuseumScene(
 
           modelGroup.add(model);
           modelGroup.position.y = -index * spacing;
-          rail.remove(placeholder);
+          setObjectOpacity(modelGroup, 0);
           rail.add(modelGroup);
           deviceMeshes[index] = modelGroup;
+          pendingModelFades[index] = modelGroup;
+          modelFadeProgress[index] = 0;
         },
         undefined,
         () => undefined
@@ -221,11 +246,47 @@ export function useMuseumScene(
       }
 
       rail.position.y = currentProgress * spacing;
+      darkBackdropPlane.visible = darkMode;
+      darkBackdropPlane.receiveShadow = darkMode;
+      darkBackdropPlane.position.set(-0.8, 0.1, -1.65);
+      (darkBackdropPlane.material as THREE.ShadowMaterial).opacity = darkMode ? 0.12 : 0;
+
+      loadingPlaceholders.forEach((placeholder, index) => {
+        if (!placeholder) return;
+        const local = currentProgress - index;
+        const focus = 1 - clamp(Math.abs(local), 0, 1);
+        const pulse = 1 + Math.sin(performance.now() * 0.008 + index * 1.1) * 0.26;
+        const settle = 0.28 + focus * 0.24;
+        placeholder.scale.setScalar(1.22 * pulse * settle);
+      });
+
+      pendingModelFades.forEach((modelGroup, index) => {
+        if (!modelGroup) return;
+
+        const nextOpacity = Math.min(modelFadeProgress[index] + 0.06, 1);
+        modelFadeProgress[index] = nextOpacity;
+        setObjectOpacity(modelGroup, nextOpacity);
+
+        const placeholder = loadingPlaceholders[index];
+        if (placeholder) {
+          setObjectOpacity(placeholder, Math.max(0, 1 - nextOpacity));
+        }
+
+        if (nextOpacity >= 1) {
+          const placeholderToRemove = loadingPlaceholders[index];
+          if (placeholderToRemove) {
+            rail.remove(placeholderToRemove);
+            loadingPlaceholders[index] = null;
+          }
+          pendingModelFades[index] = null;
+          setObjectOpacity(modelGroup, 1);
+        }
+      });
 
       deviceMeshes.forEach((mesh, index) => {
         const local = currentProgress - index;
         const nearCenter = 1 - clamp(Math.abs(local), 0, 1);
-        const shadowActive = !darkMode && Math.abs(local) < 0.55;
+        const shadowActive = Math.abs(local) < 0.55;
 
         mesh.traverse((child: THREE.Object3D) => {
           if (child instanceof THREE.Mesh) {
@@ -244,6 +305,13 @@ export function useMuseumScene(
 
         mesh.rotation.y = Math.PI * 0.06 * local;
         mesh.position.z = -Math.abs(local) * 0.25;
+
+        if (darkMode && index === Math.round(currentProgress)) {
+          darkBackdropPlane.position.x = -0.86 - Math.max(local, -0.35) * 0.24;
+          darkBackdropPlane.position.y = 0.08 + nearCenter * 0.05;
+          darkBackdropPlane.position.z = -1.68 - Math.min(Math.abs(local), 1) * 0.08;
+          (darkBackdropPlane.material as THREE.ShadowMaterial).opacity = 0.22 * nearCenter + 0.04;
+        }
 
         const heroFocusIndex = options?.heroFocusIndex;
         const heroSpinStrength = options?.heroSpinStrength ?? 0;
@@ -271,6 +339,7 @@ export function useMuseumScene(
       window.cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
       canvas.__updateProgress = undefined;
+      (darkBackdropPlane.material as THREE.ShadowMaterial).dispose();
       renderer.dispose();
     };
   }, [bundle, canvasRef, darkMode, options?.heroFocusIndex, options?.heroSpinCutoff, options?.heroSpinStrength]);

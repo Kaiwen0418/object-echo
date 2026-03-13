@@ -19,6 +19,7 @@ const THEME_STORAGE_KEY = "object-echo-theme";
 
 export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
   const devices = useMemo(() => sortDevices(bundle), [bundle]);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [viewportHeight, setViewportHeight] = useState(0);
   const [museumReveal, setMuseumReveal] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -35,7 +36,21 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
     const wantsDark = savedTheme ? savedTheme === "dark" : bundle.publishedPage.theme.darkModeDefault;
 
     document.body.classList.toggle("dark", wantsDark);
+    setIsDarkMode(wantsDark);
     window.dispatchEvent(new Event("object-echo-themechange"));
+  }, []);
+
+  useEffect(() => {
+    const syncTheme = () => setIsDarkMode(document.body.classList.contains("dark"));
+
+    syncTheme();
+    window.addEventListener("storage", syncTheme);
+    window.addEventListener("object-echo-themechange", syncTheme as EventListener);
+
+    return () => {
+      window.removeEventListener("storage", syncTheme);
+      window.removeEventListener("object-echo-themechange", syncTheme as EventListener);
+    };
   }, []);
 
   useEffect(() => {
@@ -141,9 +156,9 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
   const heroOpacity = 1 - smoothstep(0.06, 0.78, museumReveal);
   const heroIsActive = heroOpacity > 0.66;
 
-  useMuseumScene(canvasRef, bundle, displayedProgress, false, {
+  useMuseumScene(canvasRef, bundle, displayedProgress, isDarkMode, {
     heroFocusIndex: HERO_DEVICE_INDEX,
-    heroSpinStrength: 0.00022,
+    heroSpinStrength: 0,
     heroSpinCutoff: HERO_DEVICE_INDEX + 0.2
   });
 
