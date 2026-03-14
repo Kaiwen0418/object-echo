@@ -14,6 +14,26 @@
   transition: opacity 0.45s ease;
 }
 
+.museum-svg-dom-card-layer {
+  position: fixed;
+  inset: 72px 350px 0 80px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.museum-svg-dom-card {
+  position: absolute;
+  top: 7.5vh;
+  right: clamp(110px, 15vw, 260px);
+  width: 27vw;
+  min-width: 260px;
+  max-width: 420px;
+  aspect-ratio: 0.78;
+  background: rgb(255 90 31 / calc(var(--museum-svg-card-opacity, 1) * 100%));
+  transform: rotate(12deg) scale(var(--museum-svg-card-scale, 1));
+  transform-origin: center center;
+}
+
 .overlay {
   position: fixed;
   z-index: 8;
@@ -420,7 +440,7 @@
 
 .museum-device-copy {
   position: relative;
-  z-index: 4;
+  z-index: 5;
   max-width: 420px;
   margin-top: 18px;
   margin-left: clamp(12px, 2vw, 36px);
@@ -677,6 +697,16 @@
 }
 
 @media (max-width: 1100px) {
+  .museum-svg-dom-card-layer {
+    inset: 72px 0 0;
+  }
+
+  .museum-svg-dom-card {
+    right: 14vw;
+    width: 42vw;
+    min-width: 220px;
+  }
+
   .hero-meta {
     flex-direction: column;
   }

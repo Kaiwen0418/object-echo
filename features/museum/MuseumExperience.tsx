@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { MuseumHero } from "@/components/museum/MuseumHero";
 import { MuseumTimeline } from "@/components/museum/MuseumTimeline";
 import { NowPlayingCard } from "@/components/museum/NowPlayingCard";
@@ -134,7 +134,8 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
 
   useMuseumScene(canvasRef, bundle, displayedProgress, darkMode, {
     modelScaleMultiplier: modelScale,
-    svgCardScaleMultiplier: cardScale
+    svgCardScaleMultiplier: cardScale,
+    renderSvgBackdrop: false
   });
 
   const jumpToDevice = (index: number) => {
@@ -149,6 +150,20 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
 
   return (
     <div className="page">
+      {isSvgDevice ? (
+        <div
+          className="museum-svg-dom-card-layer"
+          style={
+            {
+              "--museum-svg-card-scale": String(cardScale),
+              "--museum-svg-card-opacity": String(museumOpacity)
+            } as CSSProperties
+          }
+          aria-hidden="true"
+        >
+          <div className="museum-svg-dom-card" />
+        </div>
+      ) : null}
       <canvas ref={canvasRef} className="bg-canvas" style={{ opacity: museumOpacity }} />
       <div className="museum-device-accent-layer" style={{ opacity: museumOpacity }} aria-hidden="true" />
 

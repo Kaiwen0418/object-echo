@@ -148,6 +148,7 @@ function createSvgModelObject(
   path: string,
   config: NonNullable<ReturnType<typeof getMuseumSceneModelConfig>>,
   darkMode: boolean,
+  renderBackdrop: boolean,
   onLoad: (group: THREE.Group) => void
 ) {
   const image = new Image();
@@ -176,9 +177,11 @@ function createSvgModelObject(
     texture.magFilter = THREE.LinearFilter;
 
     const group = new THREE.Group();
-    const backdrop = createSvgBackdropGroup(darkMode);
-  backdrop.position.set(0, 0, -0.08);
-  group.add(backdrop);
+    const backdrop = renderBackdrop ? createSvgBackdropGroup(darkMode) : null;
+    if (backdrop) {
+      backdrop.position.set(0, 0, -0.08);
+      group.add(backdrop);
+    }
 
     const mesh = new THREE.Mesh(
       new THREE.PlaneGeometry(config.planeWidth ?? 1.2, config.planeHeight ?? 2.4),
@@ -203,10 +206,10 @@ function createSvgModelObject(
     group.userData.svgPlane = mesh;
     group.userData.svgPlaneBaseScale = mesh.scale.clone();
     group.userData.svgBackdrop = backdrop;
-    group.userData.svgBackdropBaseScale = backdrop.scale.clone();
+    group.userData.svgBackdropBaseScale = backdrop?.scale.clone();
     group.userData.disposeTexture = () => {
       texture.dispose();
-      (backdrop.userData.disposeBackdrop as (() => void) | undefined)?.();
+      (backdrop?.userData.disposeBackdrop as (() => void) | undefined)?.();
     };
     onLoad(group);
   };
@@ -223,6 +226,7 @@ export function useMuseumScene(
     heroSpinCutoff?: number;
     modelScaleMultiplier?: number;
     svgCardScaleMultiplier?: number;
+    renderSvgBackdrop?: boolean;
   }
 ) {
   const targetProgressRef = useRef(progress);
@@ -312,7 +316,7 @@ export function useMuseumScene(
       if (!config) return;
 
       if (config.kind === "svg") {
-        createSvgModelObject(device, config.path, config, darkMode, (modelGroup) => {
+        createSvgModelObject(device, config.path, config, darkMode, options?.renderSvgBackdrop !== false, (modelGroup) => {
           if (isDisposed) return;
 
           modelGroup.position.y = -index * spacing;
@@ -575,7 +579,8 @@ export function useMuseumScene(
     options?.heroSpinCutoff,
     options?.heroSpinStrength,
     options?.modelScaleMultiplier,
-    options?.svgCardScaleMultiplier
+    options?.svgCardScaleMultiplier,
+    options?.renderSvgBackdrop
   ]);
 
   useEffect(() => {
