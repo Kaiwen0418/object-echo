@@ -129,9 +129,6 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
   const leftMotionGlow = 1 - Math.min(Math.abs(displayPhase) / PREVIEW_RANGE, 1) * 0.55;
   const playerMotionY = -displayPhase * 36;
   const playerMotionGlow = 1 - Math.min(Math.abs(displayPhase) / PREVIEW_RANGE, 1) * 0.55;
-  const summary = current
-    ? `${current.year} · ${current.era} · ${current.specs.map((item) => `${item.label} ${item.value}`).join(" / ")}`
-    : "";
   const museumOpacity = smoothstep(0.18, 0.88, museumReveal);
   const heroOpacity = 1 - smoothstep(0.08, 0.72, museumReveal);
 
@@ -189,22 +186,12 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
           </div>
           <div
             className={`museum-device-copy${isSvgDevice ? " museum-device-copy-svg" : ""}`}
-            style={{ transform: `translateY(${leftMotionY}px)`, opacity: leftMotionGlow }}
+            style={isSvgDevice ? { opacity: leftMotionGlow } : { transform: `translateY(${leftMotionY}px)`, opacity: leftMotionGlow }}
           >
-            <p className="small-caption museum-device-kicker">{bundle.publishedPage.theme.timelineLabel}</p>
             <h1 key={`title-${cardAnimKey}`} className="museum-device-title fade-card">
-              <ScrambleText active={museumOpacity > 0.4} replayToken={cardAnimKey} text={current.name} settleDurationMs={720} />
+              <ScrambleText active={museumOpacity > 0.4} replayToken={cardAnimKey} text="CASIO" settleDurationMs={720} />
             </h1>
-            <p className="museum-device-era fade-card">{current.era}</p>
-            <p key={`summary-${cardAnimKey}`} className="museum-device-summary fade-card">
-              <ScrambleText
-                active={museumOpacity > 0.4}
-                replayToken={`summary-${cardAnimKey}`}
-                text={summary}
-                startDelayMs={80}
-                settleDurationMs={980}
-              />
-            </p>
+            <p className="museum-device-summary fade-card">PERSONAL DEVICE MUSEUM</p>
           </div>
         </section>
 

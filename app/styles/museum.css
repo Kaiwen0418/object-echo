@@ -407,8 +407,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: flex-start;
-  padding: 56px 48px 48px;
-  isolation: isolate;
+  padding: 64px clamp(56px, 6vw, 104px) 48px;
 }
 
 .museum-device-backword {
@@ -422,12 +421,13 @@
 .museum-device-copy {
   position: relative;
   z-index: 4;
-  max-width: 360px;
-  margin-top: 12px;
+  max-width: 420px;
+  margin-top: 18px;
+  margin-left: clamp(12px, 2vw, 36px);
 }
 
 .museum-device-copy-svg {
-  max-width: 560px;
+  max-width: 640px;
 }
 
 .museum-device-kicker {
@@ -435,66 +435,54 @@
 }
 
 .museum-device-title {
-  margin: 12px 0 0;
-  font-family: "Orbitron", sans-serif;
-  font-size: clamp(44px, 6vw, 96px);
-  line-height: 0.88;
-  letter-spacing: -0.04em;
+  margin: 0;
+  font-family: "Helvetica Neue", "Arial", sans-serif;
+  font-size: clamp(58px, 7vw, 104px);
+  font-weight: 900;
+  line-height: 0.86;
+  letter-spacing: -0.055em;
   text-transform: uppercase;
-}
-
-.museum-device-era {
-  margin: 12px 0 0;
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: color-mix(in oklab, var(--accent) 72%, var(--text) 28%);
+  color: #f1f1ef;
+  mix-blend-mode: difference;
 }
 
 .museum-device-summary {
-  margin: 22px 0 0;
-  max-width: 32ch;
-  font-size: 12px;
-  line-height: 1.6;
-  color: var(--muted);
+  margin: 8px 0 0;
+  max-width: none;
+  font-family: "Helvetica Neue", "Arial", sans-serif;
+  font-size: clamp(24px, 2.2vw, 34px);
+  font-weight: 400;
+  line-height: 1;
+  color: #f1f1ef;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  mix-blend-mode: difference;
 }
 
 .museum-device-shell-svg .museum-device-stage {
   overflow: visible;
-  padding-right: 20px;
+  padding-left: clamp(72px, 7vw, 132px);
+  padding-right: clamp(48px, 7vw, 118px);
 }
 
 .museum-device-shell-svg .museum-device-copy {
-  width: min(56vw, 560px);
+  width: min(62vw, 660px);
+  margin-left: clamp(28px, 4vw, 84px);
 }
 
-.museum-device-shell-svg .museum-device-kicker,
 .museum-device-shell-svg .museum-device-title,
-.museum-device-shell-svg .museum-device-era,
 .museum-device-shell-svg .museum-device-summary {
   position: relative;
   z-index: 6;
-  mix-blend-mode: difference;
-}
-
-.museum-device-shell-svg .museum-device-kicker {
-  color: #66d7ff;
-  max-width: 26ch;
 }
 
 .museum-device-shell-svg .museum-device-title {
-  color: #f4f4f4;
-}
-
-.museum-device-shell-svg .museum-device-era {
-  color: #ff6f35;
+  color: #f1f1ef;
 }
 
 .museum-device-shell-svg .museum-device-summary {
-  max-width: 42ch;
-  color: #d9d9d9;
+  color: #f1f1ef;
 }
 
 .museum-device-panel {

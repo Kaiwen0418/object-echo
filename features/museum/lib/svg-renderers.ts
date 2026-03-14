@@ -1,5 +1,16 @@
 const CASIO_F91W_SVG = `
 <svg viewBox="0 -20 300 440" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="casio-central-shadow" cx="50%" cy="52%" r="34%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0.18" />
+      <stop offset="58%" stop-color="#000000" stop-opacity="0.08" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+    <filter id="casio-shadow-blur" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="12" />
+    </filter>
+  </defs>
+  <ellipse cx="150" cy="200" rx="88" ry="106" fill="url(#casio-central-shadow)" filter="url(#casio-shadow-blur)" />
   <path d="M100,50 L100,0 L200,0 L200,50" fill="none" stroke="#333" stroke-width="2" />
   <path d="M110,10 L190,10 M110,20 L190,20 M110,30 L190,30 M110,40 L190,40" stroke="#222" stroke-width="1.5" />
   <path d="M80,100 L220,100 L250,150 L250,250 L220,300 L80,300 L50,250 L50,150 Z" fill="#151515" stroke="#444" stroke-width="3" />

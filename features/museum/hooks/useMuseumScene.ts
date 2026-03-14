@@ -41,7 +41,7 @@ function createSvgBackdropGroup(darkMode: boolean) {
   const cardTilt = -0.24;
 
   const cardCore = new THREE.Mesh(
-    new THREE.BoxGeometry(2.48, 2.62, 0.08),
+    new THREE.BoxGeometry(2.14, 2.28, 0.06),
     new THREE.MeshStandardMaterial({
       color: darkMode ? "#ff4816" : "#ff5421",
       roughness: 0.98,
@@ -55,7 +55,7 @@ function createSvgBackdropGroup(darkMode: boolean) {
 
   if (cardTexture) {
     const cardFace = new THREE.Mesh(
-      new THREE.PlaneGeometry(2.5, 3.64),
+      new THREE.PlaneGeometry(2.16, 3.08),
       new THREE.MeshBasicMaterial({
         map: cardTexture,
         transparent: false,
@@ -177,59 +177,8 @@ function createSvgModelObject(
 
     const group = new THREE.Group();
     const backdrop = createSvgBackdropGroup(darkMode);
-    backdrop.position.set(0, 0, -0.08);
-    group.add(backdrop);
-
-    const shadowCanvas = document.createElement("canvas");
-    shadowCanvas.width = canvas.width;
-    shadowCanvas.height = canvas.height;
-    const shadowContext = shadowCanvas.getContext("2d");
-    let shadowTexture: THREE.CanvasTexture | null = null;
-
-    if (shadowContext) {
-      shadowContext.clearRect(0, 0, shadowCanvas.width, shadowCanvas.height);
-      shadowContext.filter = `brightness(0) saturate(0) blur(${24 * scaleFactor}px)`;
-      shadowContext.drawImage(
-        image,
-        shadowCanvas.width * 0.06,
-        shadowCanvas.height * 0.1,
-        shadowCanvas.width * 0.88,
-        shadowCanvas.height * 0.88
-      );
-      shadowContext.filter = "none";
-      shadowContext.globalCompositeOperation = "source-in";
-      shadowContext.fillStyle = "#ffffff";
-      shadowContext.fillRect(0, 0, shadowCanvas.width, shadowCanvas.height);
-      shadowContext.globalCompositeOperation = "source-over";
-
-      shadowTexture = new THREE.CanvasTexture(shadowCanvas);
-      shadowTexture.colorSpace = THREE.NoColorSpace;
-      shadowTexture.anisotropy = 8;
-      shadowTexture.generateMipmaps = true;
-      shadowTexture.minFilter = THREE.LinearMipmapLinearFilter;
-      shadowTexture.magFilter = THREE.LinearFilter;
-    }
-
-    if (shadowTexture) {
-      const shadowMesh = new THREE.Mesh(
-        new THREE.PlaneGeometry(config.planeWidth ?? 1.2, config.planeHeight ?? 2.4),
-        new THREE.MeshBasicMaterial({
-          map: shadowTexture,
-          color: "#000000",
-          transparent: true,
-          depthWrite: false,
-          opacity: darkMode ? 0.5 : 0.28
-        })
-      );
-      shadowMesh.position.set(0.1, -0.18, 0.01);
-      shadowMesh.rotation.z = -0.01;
-      shadowMesh.renderOrder = 1;
-      shadowMesh.castShadow = false;
-      shadowMesh.receiveShadow = false;
-      group.add(shadowMesh);
-      group.userData.svgShadow = shadowMesh;
-      group.userData.svgShadowBaseScale = shadowMesh.scale.clone();
-    }
+  backdrop.position.set(0, 0, -0.08);
+  group.add(backdrop);
 
     const mesh = new THREE.Mesh(
       new THREE.PlaneGeometry(config.planeWidth ?? 1.2, config.planeHeight ?? 2.4),
@@ -249,6 +198,7 @@ function createSvgModelObject(
     mesh.receiveShadow = false;
     mesh.position.z = 0.04;
     mesh.renderOrder = 2;
+
     group.add(mesh);
     group.userData.svgPlane = mesh;
     group.userData.svgPlaneBaseScale = mesh.scale.clone();
@@ -256,7 +206,6 @@ function createSvgModelObject(
     group.userData.svgBackdropBaseScale = backdrop.scale.clone();
     group.userData.disposeTexture = () => {
       texture.dispose();
-      shadowTexture?.dispose();
       (backdrop.userData.disposeBackdrop as (() => void) | undefined)?.();
     };
     onLoad(group);
@@ -532,8 +481,6 @@ export function useMuseumScene(
         const introScale = (mesh.userData.introScale as number | undefined) ?? 1;
         const svgPlane = mesh.userData.svgPlane as THREE.Object3D | undefined;
         const svgPlaneBaseScale = mesh.userData.svgPlaneBaseScale as THREE.Vector3 | undefined;
-        const svgShadow = mesh.userData.svgShadow as THREE.Object3D | undefined;
-        const svgShadowBaseScale = mesh.userData.svgShadowBaseScale as THREE.Vector3 | undefined;
         const svgBackdrop = mesh.userData.svgBackdrop as THREE.Object3D | undefined;
         const svgBackdropBaseScale = mesh.userData.svgBackdropBaseScale as THREE.Vector3 | undefined;
 
@@ -546,10 +493,6 @@ export function useMuseumScene(
           if (svgPlane && svgPlaneBaseScale) {
             svgPlane.scale.copy(svgPlaneBaseScale);
             svgPlane.scale.multiplyScalar(modelScaleMultiplier);
-          }
-          if (svgShadow && svgShadowBaseScale) {
-            svgShadow.scale.copy(svgShadowBaseScale);
-            svgShadow.scale.multiplyScalar(modelScaleMultiplier);
           }
           if (svgBackdrop && svgBackdropBaseScale) {
             svgBackdrop.scale.copy(svgBackdropBaseScale);

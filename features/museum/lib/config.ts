@@ -10,12 +10,12 @@ const MODEL_CONFIGS: Record<string, MuseumSceneModelConfig> = {
   "CASIO F-91W": {
     kind: "svg",
     path: `data:image/svg+xml;utf8,${encodeURIComponent(getMuseumSvgMarkup("CASIO F-91W") ?? "")}`,
-    scale: 2.5,
-    lift: 0.4,
+    scale: 2.18,
+    lift: 0.34,
     yaw: Math.PI * 1.22,
     pitch: Math.PI * 0.5,
-    planeWidth: 1.95,
-    planeHeight: 2.6
+    planeWidth: 1.72,
+    planeHeight: 2.28
   },
   "NOKIA 3310": { path: "/demo/models/nokia_3310/scene.gltf", scale: 2.55, lift: 0.04, yaw: Math.PI * 0.14 },
   "SONY WALKMAN": {
