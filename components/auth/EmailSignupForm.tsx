@@ -25,6 +25,12 @@ export function EmailSignupForm({ redirectTo, enabled }: EmailSignupFormProps) {
     setError(null);
     setSuccess(null);
 
+    const normalizedDisplayName = displayName.trim();
+    if (!normalizedDisplayName) {
+      setError("Display name is required.");
+      return;
+    }
+
     const supabase = createSupabaseClient();
     if (!enabled || !supabase) {
       setError("Supabase auth is not configured.");
@@ -38,7 +44,7 @@ export function EmailSignupForm({ redirectTo, enabled }: EmailSignupFormProps) {
       options: {
         emailRedirectTo: redirectTo,
         data: {
-          display_name: displayName
+          display_name: normalizedDisplayName
         }
       }
     });
@@ -68,13 +74,14 @@ export function EmailSignupForm({ redirectTo, enabled }: EmailSignupFormProps) {
         <div>
           <label htmlFor="signup-name">Display name</label>
           <input
-            id="signup-name"
-            autoComplete="nickname"
-            value={displayName}
-            onChange={(event) => setDisplayName(event.target.value)}
-            placeholder="Kaiwen Liu"
-          />
-        </div>
+          id="signup-name"
+          autoComplete="nickname"
+          value={displayName}
+          onChange={(event) => setDisplayName(event.target.value)}
+          placeholder="Kaiwen Liu"
+          required
+        />
+      </div>
         <div>
           <label htmlFor="signup-email">Email</label>
           <input

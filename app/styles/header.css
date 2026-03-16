@@ -316,6 +316,10 @@ body.dark .auth-status-trigger:hover {
   font-size: 11px;
 }
 
+.auth-avatar-fallback {
+  background: color-mix(in oklab, var(--accent) 18%, var(--bg) 82%);
+}
+
 .auth-avatar img {
   object-fit: cover;
 }

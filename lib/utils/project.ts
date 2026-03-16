@@ -220,6 +220,122 @@ export async function ensureCurrentUserProfile() {
   return mapUserProfile(data);
 }
 
+export async function getCurrentUserProfile() {
+  const user = await getCurrentSupabaseUser();
+  const supabase = await createSupabaseServerClient();
+
+  if (!user || !supabase) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("user_profiles")
+    .select("*")
+    .eq("id", user.id)
+    .maybeSingle<UserProfileRow>();
+
+  if (error) {
+    throw error;
+  }
+
+  if (data) {
+    return mapUserProfile(data);
+  }
+
+  return ensureCurrentUserProfile();
+}
+
+export async function updateCurrentUserProfile(input: {
+  displayName: string;
+  avatarUrl?: string;
+}) {
+  const user = await getCurrentSupabaseUser();
+  const supabase = await createSupabaseServerClient();
+  const admin = createSupabaseAdminClient();
+
+  if (!user || !supabase) {
+    throw new Error("You must be signed in to update your profile.");
+  }
+
+  const displayName = input.displayName.trim();
+  const avatarUrl = input.avatarUrl?.trim() || null;
+
+  if (!displayName) {
+    throw new Error("Display name is required.");
+  }
+
+  let data: UserProfileRow | null = null;
+
+  if (admin) {
+    const result = await admin
+      .from("user_profiles")
+      .upsert(
+        {
+          id: user.id,
+          email: user.email ?? "",
+          display_name: displayName,
+          avatar_url: avatarUrl
+        },
+        { onConflict: "id" }
+      )
+      .select("*")
+      .single<UserProfileRow>();
+
+    if (result.error) {
+      throw result.error;
+    }
+
+    data = result.data;
+  } else {
+    const result = await supabase
+      .from("user_profiles")
+      .update({
+        email: user.email ?? "",
+        display_name: displayName,
+        avatar_url: avatarUrl
+      })
+      .eq("id", user.id)
+      .select("*")
+      .maybeSingle<UserProfileRow>();
+
+    if (result.error) {
+      throw result.error;
+    }
+
+    if (!result.data) {
+      throw new Error("Profile record is missing. Refresh the dashboard and try again.");
+    }
+
+    data = result.data;
+  }
+
+  const { error: authError } = await supabase.auth.updateUser({
+    data: {
+      ...(user.user_metadata ?? {}),
+      display_name: displayName,
+      avatar_url: avatarUrl
+    }
+  });
+
+  if (authError && admin) {
+    const { error } = await admin.auth.admin.updateUserById(user.id, {
+      user_metadata: {
+        ...(user.user_metadata ?? {}),
+        display_name: displayName,
+        avatar_url: avatarUrl
+      }
+    });
+
+    if (error) {
+      throw error;
+    }
+  } else if (authError) {
+    throw authError;
+  }
+
+  return mapUserProfile(data);
+}
+
 export async function listProjects(): Promise<Project[]> {
   const supabase = await createSupabaseServerClient();
   const user = await getCurrentSupabaseUser();

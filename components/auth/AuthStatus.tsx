@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { SignOutLink } from "@/components/auth/SignOutLink";
-import { getCurrentSupabaseUser } from "@/lib/supabase/server";
+import { createSupabaseServerClient, getCurrentSupabaseUser } from "@/lib/supabase/server";
 
 type AuthStatusProps = {
   compact?: boolean;
@@ -9,6 +9,7 @@ type AuthStatusProps = {
 
 export async function AuthStatus({ compact = false }: AuthStatusProps) {
   const user = await getCurrentSupabaseUser();
+  const supabase = await createSupabaseServerClient();
 
   if (!user) {
     return (
@@ -29,23 +30,33 @@ export async function AuthStatus({ compact = false }: AuthStatusProps) {
     );
   }
 
+  const { data: profile } =
+    supabase && user.id
+      ? await supabase
+          .from("user_profiles")
+          .select("display_name, avatar_url")
+          .eq("id", user.id)
+          .maybeSingle<{ display_name: string | null; avatar_url: string | null }>()
+      : { data: null };
+
+  const emailLocalPart = user.email?.split("@")[0];
   const displayName =
+    profile?.display_name?.trim() ??
     user.user_metadata?.display_name ??
     user.user_metadata?.name ??
-    user.email ??
+    emailLocalPart ??
+    user.id ??
     "Signed-in user";
-  const avatarUrl = user.user_metadata?.avatar_url ?? user.user_metadata?.picture ?? null;
+  const avatarUrl = profile?.avatar_url ?? user.user_metadata?.avatar_url ?? user.user_metadata?.picture ?? null;
 
   if (compact) {
     return (
       <div className="auth-status compact auth-status-menu">
         <Link className="auth-status-trigger" href="/dashboard" aria-label="Open dashboard">
-          <span className="auth-avatar" aria-hidden="true">
+          <span className={`auth-avatar${avatarUrl ? "" : " auth-avatar-fallback"}`} aria-hidden="true">
             {avatarUrl ? (
               <Image src={avatarUrl} alt="" fill sizes="36px" />
-            ) : (
-              <span>{displayName.slice(0, 1).toUpperCase()}</span>
-            )}
+            ) : null}
           </span>
           <span className="auth-status-line auth-status-name">{displayName}</span>
         </Link>

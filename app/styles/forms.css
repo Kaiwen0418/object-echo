@@ -185,3 +185,111 @@ select[aria-invalid="true"] {
   text-transform: uppercase;
   cursor: pointer;
 }
+
+.profile-card {
+  display: grid;
+  gap: 18px;
+}
+
+.profile-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.profile-card-copy {
+  display: grid;
+  gap: 6px;
+}
+
+.profile-card-avatar {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  flex: 0 0 72px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--soft) 84%, transparent);
+}
+
+.profile-card-avatar img {
+  object-fit: cover;
+}
+
+.profile-card-avatar-fallback {
+  background: color-mix(in oklab, var(--accent) 18%, var(--bg) 82%);
+}
+
+.profile-settings-form {
+  gap: 14px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.profile-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 130;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.profile-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.36);
+  backdrop-filter: blur(8px);
+}
+
+.profile-modal-surface {
+  position: relative;
+  z-index: 1;
+  width: min(680px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding: 24px;
+  display: grid;
+  gap: 20px;
+}
+
+.profile-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.profile-avatar-upload {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin-top: 8px;
+}
+
+.profile-avatar-upload-preview {
+  width: 80px;
+  height: 80px;
+  flex: 0 0 80px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--soft) 84%, transparent);
+}
+
+.profile-avatar-upload-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.profile-avatar-upload-preview-fallback {
+  background: color-mix(in oklab, var(--accent) 18%, var(--bg) 82%);
+}
+
+.profile-avatar-upload-button {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
