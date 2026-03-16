@@ -45,7 +45,7 @@ function getUploadHelpText(type: ProjectAsset["type"]) {
   if (type === "image") {
     return "Uploads currently support standard image files such as .png, .jpg, .webp, and .avif.";
   }
-  return "Uploads currently support `.glb` directly. `.gltf` remains allowed only as an external URL.";
+  return "Project preview and public pages now use Sketchfab Viewer API. Paste a Sketchfab embed URL or use the search tool below.";
 }
 
 function validateAssetField(
@@ -186,7 +186,7 @@ export function AssetsEditor({ projectId, initialAssets }: AssetsEditorProps) {
     }
 
     setLoadingTool((current) => ({ ...current, [assetId]: "sketchfab" }));
-    setToolStatus((current) => ({ ...current, [assetId]: "Searching Sketchfab mock results..." }));
+    setToolStatus((current) => ({ ...current, [assetId]: "Searching Sketchfab catalog..." }));
 
     const response = await fetch(`/api/devices/search-models?query=${encodeURIComponent(query)}`);
     const payload = (await response.json()) as { results?: SketchfabSearchResult[] };
@@ -194,7 +194,7 @@ export function AssetsEditor({ projectId, initialAssets }: AssetsEditorProps) {
     setSketchfabResults((current) => ({ ...current, [assetId]: payload.results ?? [] }));
     setToolStatus((current) => ({
       ...current,
-      [assetId]: payload.results?.length ? "Select a result to attach it as the model source." : "No mock results returned."
+      [assetId]: payload.results?.length ? "Select a result to attach it as the model source." : "No catalog results returned."
     }));
     setLoadingTool((current) => ({ ...current, [assetId]: undefined }));
   };
@@ -207,7 +207,9 @@ export function AssetsEditor({ projectId, initialAssets }: AssetsEditorProps) {
               ...asset,
               title: asset.title || result.name,
               sourceType: "sketchfab",
-              sourceUrl: result.viewerUrl
+              sourceUrl: result.embedUrl,
+              author: result.authorName,
+              license: result.licenseLabel
             }
           : asset
       )
@@ -217,7 +219,7 @@ export function AssetsEditor({ projectId, initialAssets }: AssetsEditorProps) {
     if (assetId) {
       setToolStatus((current) => ({
         ...current,
-        [assetId]: "Sketchfab result attached. TODO: replace with real download/import flow."
+        [assetId]: "Sketchfab viewer attached."
       }));
       setErrors((current) => ({
         ...current,
@@ -379,7 +381,9 @@ export function AssetsEditor({ projectId, initialAssets }: AssetsEditorProps) {
               onBlur={(event) => validateOnBlur(asset.id, "source", event.target.value)}
             />
             <p id={`asset-source-help-${asset.id}`} className="field-help">
-              Use a public URL for now. Supabase Storage upload wiring can replace this later.
+              {asset.type === "model"
+                ? "Use a Sketchfab embed URL for viewer-based museum pages. Legacy .glb/.gltf URLs remain accepted for the homepage demo pipeline."
+                : "Use a public URL for now. Supabase Storage upload wiring can replace this later."}
             </p>
             {errors[asset.id]?.source ? (
               <p id={`asset-source-error-${asset.id}`} className="field-error">

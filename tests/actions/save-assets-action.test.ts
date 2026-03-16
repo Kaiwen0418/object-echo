@@ -81,8 +81,28 @@ describe("app/dashboard/[projectId]/(workspace)/assets/actions", () => {
 
     expect(syncProjectAssets).not.toHaveBeenCalled();
     expect(result).toEqual({
-      error: "Asset 1 must reference a .glb or .gltf model file."
+      error: "Asset 1 must reference a .glb/.gltf file or a Sketchfab model URL."
     });
+  });
+
+  it("accepts sketchfab embed urls for model assets", async () => {
+    const { saveAssetsAction } = await import("@/app/dashboard/[projectId]/(workspace)/assets/actions");
+    const formData = new FormData();
+    formData.set(
+      "assetsJson",
+      JSON.stringify([
+        {
+          type: "model",
+          sourceType: "sketchfab",
+          sourceUrl: "https://sketchfab.com/models/c3d445e4e77441eba265504c0391a415/embed"
+        }
+      ])
+    );
+
+    const result = await saveAssetsAction("project-1", {}, formData);
+
+    expect(syncProjectAssets).toHaveBeenCalled();
+    expect(result).toEqual({ success: "Assets saved." });
   });
 
   it("strips draft ids before save", async () => {

@@ -764,3 +764,129 @@ body.dark .museum-device-summary {
     border-top: 1px solid color-mix(in oklab, var(--muted) 24%, transparent);
   }
 }
+
+.museum-viewer-page {
+  position: relative;
+  overflow: hidden;
+  padding: 96px 24px 40px;
+}
+
+.museum-viewer-backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 20%, color-mix(in oklab, var(--accent) 14%, transparent), transparent 38%),
+    radial-gradient(circle at 80% 10%, color-mix(in oklab, var(--soft) 80%, transparent), transparent 30%),
+    linear-gradient(180deg, color-mix(in oklab, var(--bg) 92%, #0d1325 8%), var(--bg));
+  opacity: 0.92;
+  pointer-events: none;
+}
+
+.museum-viewer-header,
+.museum-viewer-shell {
+  position: relative;
+  z-index: 1;
+}
+
+.museum-viewer-header {
+  width: min(1180px, 100%);
+  margin: 0 auto 24px;
+}
+
+.museum-viewer-header h1,
+.museum-viewer-header p {
+  margin: 0;
+}
+
+.museum-viewer-kicker {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 14px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.museum-viewer-shell {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr) minmax(280px, 340px);
+  gap: 24px;
+}
+
+.museum-viewer-stage {
+  position: relative;
+  display: grid;
+  gap: 18px;
+}
+
+.sketchfab-viewer {
+  display: grid;
+  gap: 12px;
+}
+
+.sketchfab-viewer-frame {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--bg) 80%, #101726 20%);
+  min-height: 540px;
+}
+
+.sketchfab-viewer-frame iframe {
+  display: block;
+  width: 100%;
+  height: 540px;
+  border: 0;
+}
+
+.sketchfab-viewer-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.sketchfab-viewer-status {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.sketchfab-viewer-status.is-ready {
+  color: color-mix(in oklab, var(--accent) 80%, var(--text) 20%);
+}
+
+.sketchfab-viewer-status.is-error {
+  color: #d14b4b;
+}
+
+.sketchfab-viewer-actions {
+  display: flex;
+  gap: 14px;
+}
+
+.museum-spec-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
+}
+
+@media (max-width: 1100px) {
+  .museum-viewer-page {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .museum-viewer-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sketchfab-viewer-frame,
+  .sketchfab-viewer-frame iframe {
+    min-height: 420px;
+    height: 420px;
+  }
+}

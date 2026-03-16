@@ -68,8 +68,8 @@ describeRemote.sequential("remote Supabase project integration", () => {
     const assets = await syncProjectAssets(project.id, [
       {
         type: "model",
-        sourceType: "external",
-        sourceUrl: "https://cdn.example.com/device.glb",
+        sourceType: "sketchfab",
+        sourceUrl: "https://sketchfab.com/models/c3d445e4e77441eba265504c0391a415/embed",
         title: "Device Model"
       },
       {

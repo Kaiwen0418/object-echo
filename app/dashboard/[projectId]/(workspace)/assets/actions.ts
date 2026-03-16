@@ -1,5 +1,6 @@
 "use server";
 
+import { extractSketchfabUid } from "@/features/museum/lib/config";
 import { syncProjectAssets } from "@/lib/utils/project";
 import type { ProjectAsset } from "@/types";
 
@@ -22,7 +23,7 @@ type AssetPayload = {
 
 function isAllowedModelAssetSource(value: string) {
   const normalized = value.toLowerCase();
-  return normalized.endsWith(".glb") || normalized.endsWith(".gltf");
+  return normalized.endsWith(".glb") || normalized.endsWith(".gltf") || Boolean(extractSketchfabUid(value));
 }
 
 function parseAssets(raw: FormDataEntryValue | null): AssetPayload[] {
@@ -62,7 +63,7 @@ function parseAssets(raw: FormDataEntryValue | null): AssetPayload[] {
     if (type === "model") {
       const modelSource = sourceUrl || storageKey;
       if (!modelSource || !isAllowedModelAssetSource(modelSource)) {
-        throw new Error(`Asset ${index + 1} must reference a .glb or .gltf model file.`);
+        throw new Error(`Asset ${index + 1} must reference a .glb/.gltf file or a Sketchfab model URL.`);
       }
     }
 
