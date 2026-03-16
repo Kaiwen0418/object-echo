@@ -15,6 +15,9 @@ export default async function ProjectOverviewPage({
   return (
     <section className="section-row">
       <article className="panel">
+        <Link className="dashboard-back-link" href="/dashboard">
+          Back
+        </Link>
         <div className="section-eyebrow">Project overview</div>
         <h1>{bundle.project.title}</h1>
         <p>{bundle.project.description}</p>

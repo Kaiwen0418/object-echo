@@ -265,7 +265,7 @@ export function DevicesEditor({ projectId, initialDevices, initialAssets }: Devi
         <button type="button" className="primary-button" onClick={add}>
           Add Device
         </button>
-        <button type="submit" className="ghost-button" disabled={isPending}>
+        <button type="submit" className="primary-button form-submit-button" disabled={isPending}>
           {isPending ? "Saving..." : "Save Changes"}
         </button>
         <span className="inline-note">Device ordering and edits now save to Supabase.</span>

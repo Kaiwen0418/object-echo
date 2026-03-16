@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AssetsEditor } from "@/components/dashboard/AssetsEditor";
 import { getProjectById } from "@/lib/utils/project";
@@ -14,7 +15,10 @@ export default async function AssetsPage({
 
   return (
     <section className="section-row">
-      <div>
+      <div className="dashboard-page-header">
+        <Link className="dashboard-back-link" href={`/dashboard/${projectId}`}>
+          Back
+        </Link>
         <div className="section-eyebrow">Asset management</div>
         <h1>Assets</h1>
       </div>

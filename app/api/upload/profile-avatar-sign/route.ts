@@ -24,6 +24,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to create avatar upload URL.";
+    console.error("Failed to create avatar upload URL", error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

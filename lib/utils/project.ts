@@ -385,7 +385,7 @@ export async function createProject(input: {
     .single<ProjectRow>();
 
   if (error) {
-    throw error;
+    throw new Error(error.message);
   }
 
   return mapProject(data);

@@ -49,6 +49,7 @@ export async function createProjectAction(
       projectId: project.id
     };
   } catch (error) {
+    console.error("Failed to create project", error);
     const message = error instanceof Error ? error.message : "Failed to create project.";
 
     if (message.includes("duplicate key") || message.includes("projects_slug_key")) {

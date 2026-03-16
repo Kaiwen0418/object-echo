@@ -464,7 +464,7 @@ export function AssetsEditor({ projectId, initialAssets }: AssetsEditorProps) {
         <button type="button" className="primary-button" onClick={add}>
           Add Asset
         </button>
-        <button type="submit" className="ghost-button" disabled={isPending}>
+        <button type="submit" className="primary-button form-submit-button" disabled={isPending}>
           {isPending ? "Saving..." : "Save Changes"}
         </button>
         <span className="inline-note">Asset metadata now saves to Supabase.</span>

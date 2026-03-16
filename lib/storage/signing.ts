@@ -1,5 +1,6 @@
 import { getStorageConfig } from "@/lib/storage/client";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type StorageSignedUpload = {
   bucket: string;
@@ -21,6 +22,32 @@ type CreateUserAvatarSignedUploadParams = {
   filename: string;
 };
 
+async function ensureStorageBucket(admin: SupabaseClient, bucket: string) {
+  const { data: existingBucket, error: bucketError } = await admin.storage.getBucket(bucket);
+
+  if (!bucketError && existingBucket) {
+    if (!existingBucket.public) {
+      const { error: updateError } = await admin.storage.updateBucket(bucket, {
+        public: true
+      });
+
+      if (updateError) {
+        throw updateError;
+      }
+    }
+
+    return;
+  }
+
+  const { error: createError } = await admin.storage.createBucket(bucket, {
+    public: true
+  });
+
+  if (createError) {
+    throw createError;
+  }
+}
+
 export async function createStorageSignedUpload({
   projectId,
   kind,
@@ -34,6 +61,8 @@ export async function createStorageSignedUpload({
   if (!storage.enabled || !admin) {
     throw new Error("Supabase Storage is not configured.");
   }
+
+  await ensureStorageBucket(admin, storage.bucket);
 
   const { data, error } = await admin.storage.from(storage.bucket).createSignedUploadUrl(path);
 
@@ -68,6 +97,8 @@ export async function createUserAvatarSignedUpload({
   if (!storage.enabled || !admin) {
     throw new Error("Supabase Storage is not configured.");
   }
+
+  await ensureStorageBucket(admin, storage.bucket);
 
   const { data, error } = await admin.storage.from(storage.bucket).createSignedUploadUrl(path);
 

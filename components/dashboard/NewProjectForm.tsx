@@ -123,7 +123,7 @@ export function NewProjectForm() {
       {state.error ? <div className="panel auth-alert">{state.error}</div> : null}
       {state.success ? <p className="field-success">{state.success}</p> : null}
       <div className="inline-actions">
-        <button type="submit" className="primary-button" disabled={isPending}>
+        <button type="submit" className="primary-button form-submit-button" disabled={isPending}>
           {isPending ? "Creating..." : "Create Project"}
         </button>
         <span className="inline-note">Projects are now persisted to Supabase.</span>

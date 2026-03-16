@@ -293,3 +293,62 @@ select[aria-invalid="true"] {
   align-items: center;
   cursor: pointer;
 }
+
+.dashboard-page-header {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+
+.dashboard-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-family: "Space Mono", monospace;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: color 0.18s ease, transform 0.18s ease;
+}
+
+.dashboard-back-link::before {
+  content: "<";
+  line-height: 1;
+}
+
+.dashboard-back-link:hover {
+  color: var(--text);
+  transform: translateX(-1px);
+}
+
+.form-submit-button {
+  padding: 12px 18px;
+  border: 1px solid var(--text);
+  background: var(--text);
+  color: var(--bg);
+}
+
+.form-submit-button:hover {
+  color: var(--bg);
+  opacity: 0.86;
+}
+
+body.dark .form-submit-button {
+  border-color: #ffffff;
+  background: #ffffff;
+  color: #000000;
+}
+
+body.dark .form-submit-button:hover {
+  color: #000000;
+  opacity: 0.84;
+}
+
+.dashboard-preview-shell {
+  padding-bottom: 0;
+}

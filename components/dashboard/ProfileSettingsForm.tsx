@@ -132,7 +132,7 @@ export function ProfileSettingsForm({ profile, onSaved, onCancel }: ProfileSetti
       {state.error ? <p className="field-error">{state.error}</p> : null}
       {state.success ? <p className="field-success">{state.success}</p> : null}
       <div className="inline-actions">
-        <button type="submit" className="primary-button" disabled={isPending}>
+        <button type="submit" className="primary-button form-submit-button" disabled={isPending}>
           {isPending ? "Saving..." : "Save Profile"}
         </button>
         {onCancel ? (
