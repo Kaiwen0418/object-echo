@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createStorageSignedUpload } from "@/lib/storage/signing";
 import { createSupabaseServerClient, getCurrentSupabaseUser } from "@/lib/supabase/server";
 
-type StorageKind = "models" | "audio" | "images";
+type StorageKind = "model" | "audio" | "image";
 
 export async function POST(request: Request) {
   try {
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
 
     const projectId = typeof body.projectId === "string" ? body.projectId : "";
     const filename = typeof body.filename === "string" ? body.filename : "asset.bin";
-    const kind = body.kind === "audio" || body.kind === "images" || body.kind === "models" ? body.kind : "models";
+    const kind = body.kind === "audio" || body.kind === "image" || body.kind === "model" ? body.kind : "model";
 
     if (!projectId) {
       return NextResponse.json({ error: "projectId is required." }, { status: 400 });

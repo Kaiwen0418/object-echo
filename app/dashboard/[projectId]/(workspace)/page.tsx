@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProjectById } from "@/lib/utils/project";
 
@@ -19,6 +20,17 @@ export default async function ProjectOverviewPage({
         <p>{bundle.project.description}</p>
         <p>Devices: {bundle.devices.length}</p>
         <p>Assets: {bundle.assets.length}</p>
+        <div className="inline-actions">
+          <Link className="primary-button" href={`/dashboard/${projectId}/assets`}>
+            Upload Assets
+          </Link>
+          <Link className="ghost-button" href={`/dashboard/${projectId}/devices`}>
+            Edit Devices
+          </Link>
+          <Link className="ghost-button" href={`/dashboard/${projectId}/preview`}>
+            Preview Museum
+          </Link>
+        </div>
       </article>
     </section>
   );

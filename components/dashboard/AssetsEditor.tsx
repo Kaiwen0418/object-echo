@@ -253,7 +253,7 @@ export function AssetsEditor({ projectId, initialAssets }: AssetsEditorProps) {
         },
         body: JSON.stringify({
           projectId,
-          kind: asset.type === "audio" ? "audio" : asset.type === "image" ? "images" : "models",
+          kind: asset.type,
           filename: file.name
         })
       });

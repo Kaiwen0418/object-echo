@@ -12,7 +12,7 @@ export type StorageSignedUpload = {
 
 type CreateStorageSignedUploadParams = {
   projectId: string;
-  kind: "models" | "audio" | "images";
+  kind: "model" | "audio" | "image";
   filename: string;
 };
 
@@ -23,7 +23,7 @@ export async function createStorageSignedUpload({
 }: CreateStorageSignedUploadParams): Promise<StorageSignedUpload> {
   const storage = getStorageConfig();
   const safeFilename = filename.replace(/[^a-zA-Z0-9._-]/g, "-");
-  const path = `projects/${projectId}/${kind}/${Date.now()}-${safeFilename}`;
+  const path = `projects/${projectId}/uploads/${kind}-${Date.now()}-${safeFilename}`;
   const admin = createSupabaseAdminClient();
 
   if (!storage.enabled || !admin) {

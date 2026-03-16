@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createProjectAction, type CreateProjectState } from "@/app/dashboard/new/actions";
 
 const initialState: CreateProjectState = {};
@@ -19,8 +20,14 @@ function slugify(input: string) {
 }
 
 export function NewProjectForm() {
+  const router = useRouter();
   const [state, formAction, isPending] = useActionState(createProjectAction, initialState);
   const [errors, setErrors] = useState<FormErrors>({});
+
+  useEffect(() => {
+    if (!state.projectId) return;
+    router.push(`/dashboard/${state.projectId}`);
+  }, [router, state.projectId]);
 
   const validate = (formData: FormData) => {
     const nextErrors: FormErrors = {};
@@ -114,6 +121,7 @@ export function NewProjectForm() {
         <textarea id="description" name="description" rows={5} placeholder="Describe the collection and mood." />
       </div>
       {state.error ? <div className="panel auth-alert">{state.error}</div> : null}
+      {state.success ? <p className="field-success">{state.success}</p> : null}
       <div className="inline-actions">
         <button type="submit" className="primary-button" disabled={isPending}>
           {isPending ? "Creating..." : "Create Project"}

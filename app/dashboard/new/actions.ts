@@ -1,6 +1,5 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { createProject } from "@/lib/utils/project";
 
 export type CreateProjectState = {
@@ -9,6 +8,8 @@ export type CreateProjectState = {
     slug?: string;
   };
   error?: string;
+  success?: string;
+  projectId?: string;
 };
 
 function slugify(input: string) {
@@ -43,7 +44,10 @@ export async function createProjectAction(
       description
     });
 
-    redirect(`/dashboard/${project.id}`);
+    return {
+      success: "Project created.",
+      projectId: project.id
+    };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to create project.";
 
