@@ -49,10 +49,6 @@ const MODEL_CONFIGS: Record<string, MuseumSceneModelConfig> = {
   }
 };
 
-function inferRenderKind(path: string): MuseumSceneModelConfig["kind"] {
-  return path.toLowerCase().endsWith(".svg") ? "svg" : "gltf";
-}
-
 export function getMuseumDefaultSceneModelConfig(device: ProjectDevice) {
   return MODEL_CONFIGS[device.name];
 }
@@ -90,7 +86,7 @@ export function getMuseumSceneModelConfig(device: ProjectDevice, assets?: Projec
       yaw: Math.PI * 0.2,
       pitch: 0
     }),
-    kind: inferRenderKind(assetOverride.path),
+    kind: "gltf",
     path: assetOverride.path
   };
 }

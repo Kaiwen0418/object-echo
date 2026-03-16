@@ -82,7 +82,7 @@ export type MuseumProjectBundle = {
 };
 
 export type MuseumSceneModelConfig = {
-  kind?: "gltf" | "svg";
+  kind?: "gltf";
   path: string;
   scale: number;
   lift: number;
@@ -93,8 +93,6 @@ export type MuseumSceneModelConfig = {
   emissiveIntensity?: number;
   roughnessScale?: number;
   metalnessScale?: number;
-  planeWidth?: number;
-  planeHeight?: number;
 };
 
 export type SketchfabSearchResult = {

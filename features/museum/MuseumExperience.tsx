@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MuseumHero } from "@/components/museum/MuseumHero";
 import { MuseumTimeline } from "@/components/museum/MuseumTimeline";
 import { NowPlayingCard } from "@/components/museum/NowPlayingCard";
@@ -9,7 +9,6 @@ import {
   PREVIEW_RANGE,
   SNAP_CAPTURE_RADIUS,
   SNAP_THRESHOLD,
-  getMuseumSceneModelConfig,
   sortDevices
 } from "@/features/museum/lib/config";
 import { useMuseumScene, type ProgressCanvas } from "@/features/museum/hooks/useMuseumScene";
@@ -31,7 +30,6 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
   const [displayedProgress, setDisplayedProgress] = useState(0);
   const [cardAnimKey, setCardAnimKey] = useState(0);
   const [modelScale, setModelScale] = useState(1);
-  const [cardScale, setCardScale] = useState(1);
   const canvasRef = useRef<ProgressCanvas | null>(null);
   const scrollIdleTimeoutRef = useRef<number | null>(null);
 
@@ -95,8 +93,6 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
   }, [isInSnapZone, nearestIndex]);
 
   const current = devices[centeredIndex] ?? devices[0];
-  const currentModelConfig = current ? getMuseumSceneModelConfig(current, bundle.assets) : undefined;
-  const isSvgDevice = currentModelConfig?.kind === "svg";
 
   useEffect(() => {
     setCardAnimKey((value) => value + 1);
@@ -134,9 +130,7 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
   const heroOpacity = 1 - smoothstep(0.08, 0.72, museumReveal);
 
   const { deviceRenderStates } = useMuseumScene(canvasRef, bundle, displayedProgress, darkMode, {
-    modelScaleMultiplier: modelScale,
-    svgCardScaleMultiplier: cardScale,
-    renderSvgBackdrop: false
+    modelScaleMultiplier: modelScale
   });
   const isUsingFallbackModel = Boolean(current?.modelAssetId && current && deviceRenderStates[current.id] === "fallback");
 
@@ -152,20 +146,6 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
 
   return (
     <div className="page">
-      {isSvgDevice ? (
-        <div
-          className="museum-svg-dom-card-layer"
-          style={
-            {
-              "--museum-svg-card-scale": String(cardScale),
-              "--museum-svg-card-opacity": String(museumOpacity)
-            } as CSSProperties
-          }
-          aria-hidden="true"
-        >
-          <div className="museum-svg-dom-card" />
-        </div>
-      ) : null}
       <canvas ref={canvasRef} className="bg-canvas" style={{ opacity: museumOpacity }} />
       <div className="museum-device-accent-layer" style={{ opacity: museumOpacity }} aria-hidden="true" />
 
@@ -185,7 +165,7 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
       </button>
 
       <main
-        className={`museum-device-shell overlay${isSvgDevice ? " museum-device-shell-svg" : ""}`}
+        className="museum-device-shell overlay"
         style={{ opacity: museumOpacity, pointerEvents: museumOpacity > 0.4 ? "auto" : "none" }}
       >
         <aside className="museum-device-timeline">
@@ -197,13 +177,13 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
           />
         </aside>
 
-        <section className={`museum-device-stage${isSvgDevice ? " museum-device-stage-svg" : ""}`}>
+        <section className="museum-device-stage">
           <div className="museum-device-backword" aria-hidden="true">
             {current.name}
           </div>
           <div
-            className={`museum-device-copy${isSvgDevice ? " museum-device-copy-svg" : ""}`}
-            style={isSvgDevice ? { opacity: leftMotionGlow } : { transform: `translateY(${leftMotionY}px)`, opacity: leftMotionGlow }}
+            className="museum-device-copy"
+            style={{ transform: `translateY(${leftMotionY}px)`, opacity: leftMotionGlow }}
           >
             <h1 key={`title-${cardAnimKey}`} className="museum-device-title fade-card">
               <ScrambleText active={museumOpacity > 0.4} replayToken={cardAnimKey} text="CASIO" settleDurationMs={720} />
@@ -247,23 +227,6 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
                   onChange={(event) => setModelScale(Number(event.target.value))}
                 />
               </label>
-              {isSvgDevice ? (
-                <label className="museum-control">
-                  <div className="museum-control-row">
-                    <span className="museum-spec-item-label">Card Size</span>
-                    <span className="museum-spec-item-value">{cardScale.toFixed(2)}x</span>
-                  </div>
-                  <input
-                    className="museum-control-slider"
-                    type="range"
-                    min="0.7"
-                    max="1.55"
-                    step="0.01"
-                    value={cardScale}
-                    onChange={(event) => setCardScale(Number(event.target.value))}
-                  />
-                </label>
-              ) : null}
             </div>
             {isUsingFallbackModel ? (
               <p className="museum-spec-note">
