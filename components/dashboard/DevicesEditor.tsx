@@ -51,6 +51,10 @@ export function DevicesEditor({ projectId, initialDevices, initialAssets }: Devi
     () => initialAssets.filter((asset) => asset.type === "model" && (asset.sourceUrl || asset.storageKey)),
     [initialAssets]
   );
+  const audioAssets = useMemo(
+    () => initialAssets.filter((asset) => asset.type === "audio" && (asset.sourceUrl || asset.storageKey)),
+    [initialAssets]
+  );
 
   useEffect(() => {
     if (state.success) {
@@ -58,7 +62,7 @@ export function DevicesEditor({ projectId, initialDevices, initialAssets }: Devi
     }
   }, [router, state.success]);
 
-  const updateDevice = (index: number, key: "name" | "year" | "modelAssetId", value: string) => {
+  const updateDevice = (index: number, key: "name" | "year" | "modelAssetId" | "musicAssetId", value: string) => {
     setDevices((current) =>
       current.map((device, deviceIndex) =>
         deviceIndex === index
@@ -78,7 +82,7 @@ export function DevicesEditor({ projectId, initialDevices, initialAssets }: Devi
     const deviceId = devices[index]?.id;
     if (!deviceId) return;
 
-    if (key === "modelAssetId") {
+    if (key === "modelAssetId" || key === "musicAssetId") {
       return;
     }
 
@@ -224,6 +228,24 @@ export function DevicesEditor({ projectId, initialDevices, initialAssets }: Devi
             </select>
             <p className="field-help">
               Select one of this project&apos;s uploaded model assets to override the default device model.
+            </p>
+          </div>
+          <div>
+            <label htmlFor={`device-music-${device.id}`}>Audio Asset</label>
+            <select
+              id={`device-music-${device.id}`}
+              value={device.musicAssetId ?? ""}
+              onChange={(event) => updateDevice(index, "musicAssetId", event.target.value)}
+            >
+              <option value="">Use theme soundtrack metadata</option>
+              {audioAssets.map((asset) => (
+                <option key={asset.id} value={asset.id}>
+                  {asset.title?.trim() || asset.storageKey || asset.sourceUrl || asset.id}
+                </option>
+              ))}
+            </select>
+            <p className="field-help">
+              Select an audio asset to drive the soundtrack card and inline playback for this device.
             </p>
           </div>
           <div className="inline-actions">

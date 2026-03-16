@@ -30,7 +30,7 @@
   border-bottom: 1px solid color-mix(in oklab, var(--text) 22%, transparent);
   background: transparent;
   backdrop-filter: none;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .dashboard-header {
@@ -284,6 +284,7 @@ body.dark .auth-status-trigger:hover {
 
 .auth-status-menu {
   position: relative;
+  z-index: 40;
 }
 
 .auth-status-trigger {
@@ -333,6 +334,7 @@ body.dark .auth-status-trigger:hover {
   position: absolute;
   top: 100%;
   right: 0;
+  z-index: 60;
   display: grid;
   gap: 8px;
   min-width: 196px;

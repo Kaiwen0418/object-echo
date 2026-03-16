@@ -93,6 +93,9 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
   }, [isInSnapZone, nearestIndex]);
 
   const current = devices[centeredIndex] ?? devices[0];
+  const currentAudioAsset = current?.musicAssetId
+    ? bundle.assets.find((asset) => asset.id === current.musicAssetId && asset.type === "audio")
+    : undefined;
 
   useEffect(() => {
     setCardAnimKey((value) => value + 1);
@@ -238,6 +241,7 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
           <NowPlayingCard
             device={current}
             theme={bundle.publishedPage.theme}
+            audioAsset={currentAudioAsset}
             museumOpacity={museumOpacity}
             motionY={playerMotionY}
             glow={playerMotionGlow}

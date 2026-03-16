@@ -32,6 +32,22 @@ type AssetFieldErrors = Record<
   }
 >;
 
+function getUploadAccept(type: ProjectAsset["type"]) {
+  if (type === "audio") return "audio/*,.mp3,.wav,.m4a,.aac,.ogg";
+  if (type === "image") return "image/*,.png,.jpg,.jpeg,.webp,.avif";
+  return ".glb";
+}
+
+function getUploadHelpText(type: ProjectAsset["type"]) {
+  if (type === "audio") {
+    return "Uploads currently support direct audio files such as .mp3, .wav, .m4a, .aac, and .ogg.";
+  }
+  if (type === "image") {
+    return "Uploads currently support standard image files such as .png, .jpg, .webp, and .avif.";
+  }
+  return "Uploads currently support `.glb` directly. `.gltf` remains allowed only as an external URL.";
+}
+
 function validateAssetField(
   key: "type" | "sourceType" | "source",
   value: string
@@ -371,10 +387,12 @@ export function AssetsEditor({ projectId, initialAssets }: AssetsEditorProps) {
               </p>
             ) : null}
           </div>
-          {asset.type === "model" ? (
+          {asset.sourceType === "upload" || (asset.type === "model" && asset.sourceType === "sketchfab") ? (
             <div className="asset-source-tools">
-              <div className="section-eyebrow">Model source interface</div>
-              {asset.sourceType === "sketchfab" ? (
+              <div className="section-eyebrow">
+                {asset.type === "audio" ? "Audio source interface" : asset.type === "image" ? "Image source interface" : "Model source interface"}
+              </div>
+              {asset.type === "model" && asset.sourceType === "sketchfab" ? (
                 <>
                   <div className="inline-actions">
                     <input
@@ -416,7 +434,7 @@ export function AssetsEditor({ projectId, initialAssets }: AssetsEditorProps) {
                   <label className="ghost-button">
                     <input
                       type="file"
-                      accept=".glb"
+                      accept={getUploadAccept(asset.type)}
                       hidden
                       disabled={loadingTool[asset.id] === "upload"}
                       onChange={(event) => {
@@ -429,7 +447,7 @@ export function AssetsEditor({ projectId, initialAssets }: AssetsEditorProps) {
                     />
                     {loadingTool[asset.id] === "upload" ? "Uploading..." : "Choose File"}
                   </label>
-                  <span className="field-help">Uploads currently support `.glb` directly. `.gltf` remains allowed only as an external URL.</span>
+                  <span className="field-help">{getUploadHelpText(asset.type)}</span>
                 </div>
               ) : null}
               {toolStatus[asset.id] ? <p className="field-help">{toolStatus[asset.id]}</p> : null}

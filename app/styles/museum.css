@@ -337,6 +337,29 @@
   line-height: 1.06;
 }
 
+.player-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.player-toggle {
+  border: 1px solid color-mix(in oklab, var(--muted) 32%, transparent);
+  background: transparent;
+  color: var(--text);
+  padding: 6px 10px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.player-toggle:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 .track-sub {
   margin-top: 8px;
   color: var(--muted);
@@ -438,8 +461,7 @@
   line-height: 0.86;
   letter-spacing: -0.055em;
   text-transform: uppercase;
-  color: #f1f1ef;
-  mix-blend-mode: difference;
+  color: var(--text);
 }
 
 .museum-device-summary {
@@ -449,11 +471,15 @@
   font-size: clamp(24px, 2.2vw, 34px);
   font-weight: 400;
   line-height: 1;
-  color: #f1f1ef;
+  color: var(--text);
   text-transform: uppercase;
   letter-spacing: 0.03em;
   white-space: nowrap;
-  mix-blend-mode: difference;
+}
+
+body.dark .museum-device-title,
+body.dark .museum-device-summary {
+  color: #f1f1ef;
 }
 
 .museum-device-panel {
@@ -623,6 +649,10 @@
 
 .player-panel .track-title {
   font-size: 18px;
+}
+
+.player-panel .player-actions {
+  align-items: flex-start;
 }
 
 .player-panel .small-caption {

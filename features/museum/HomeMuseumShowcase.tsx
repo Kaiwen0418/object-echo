@@ -118,6 +118,9 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
   }, [isInSnapZone, museumReveal, nearestIndex]);
 
   const current = devices[centeredIndex] ?? devices[HERO_DEVICE_INDEX] ?? devices[0];
+  const currentAudioAsset = current?.musicAssetId
+    ? bundle.assets.find((asset) => asset.id === current.musicAssetId && asset.type === "audio")
+    : undefined;
 
   useEffect(() => {
     setCardAnimKey((value) => value + 1);
@@ -206,7 +209,12 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
             style={{ transform: `translateY(${leftMotionY}px)`, opacity: leftMotionGlow }}
           >
             <h1 key={`title-${cardAnimKey}`} className="museum-device-title fade-card">
-              <ScrambleText active={museumOpacity > 0.4} replayToken={cardAnimKey} text="CASIO" settleDurationMs={720} />
+              <ScrambleText
+                active={museumOpacity > 0.4}
+                replayToken={cardAnimKey}
+                text={current.name}
+                settleDurationMs={720}
+              />
             </h1>
             <p className="museum-device-summary fade-card">PERSONAL DEVICE MUSEUM</p>
           </div>
@@ -258,6 +266,7 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
           <NowPlayingCard
             device={current}
             theme={bundle.publishedPage.theme}
+            audioAsset={currentAudioAsset}
             museumOpacity={museumOpacity}
             motionY={playerMotionY}
             glow={playerMotionGlow}
