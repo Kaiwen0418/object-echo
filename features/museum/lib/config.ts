@@ -1,4 +1,4 @@
-import type { MuseumProjectBundle, MuseumSceneModelConfig, ProjectDevice } from "@/types";
+import type { MuseumProjectBundle, MuseumSceneModelConfig, ProjectAsset, ProjectDevice } from "@/types";
 
 export const TIMELINE_DETAIL_TICKS = [-0.8, -0.45, -0.2, 0.35, 0.7, 1.35, 1.7, 2.35, 2.7, 3.2, 3.5, 3.8];
 export const SNAP_THRESHOLD = 1.92;
@@ -8,10 +8,10 @@ export const SNAP_CAPTURE_RADIUS = 0.54;
 const MODEL_CONFIGS: Record<string, MuseumSceneModelConfig> = {
   "CASIO F-91W": {
     path: "/demo/models/casio_f-91w/scene.gltf",
-    scale: 1.7,
-    lift: 0.4,
-    yaw: Math.PI * 1.22,
-    pitch: Math.PI * 0.5
+    scale: 2.8,
+    lift: 0.06,
+    yaw: Math.PI * 0.24,
+    pitch: Math.PI * 0.02
   },
   "NOKIA 3310": { path: "/demo/models/nokia_3310/scene.gltf", scale: 2.55, lift: 0.04, yaw: Math.PI * 0.14 },
   "SONY WALKMAN": {
@@ -49,8 +49,50 @@ const MODEL_CONFIGS: Record<string, MuseumSceneModelConfig> = {
   }
 };
 
-export function getMuseumSceneModelConfig(device: ProjectDevice) {
+function inferRenderKind(path: string): MuseumSceneModelConfig["kind"] {
+  return path.toLowerCase().endsWith(".svg") ? "svg" : "gltf";
+}
+
+export function getMuseumDefaultSceneModelConfig(device: ProjectDevice) {
   return MODEL_CONFIGS[device.name];
+}
+
+export function getMuseumAssetModelOverride(device: ProjectDevice, assets?: ProjectAsset[]) {
+  if (!device.modelAssetId || !assets?.length) {
+    return undefined;
+  }
+
+  const asset = assets.find((candidate) => candidate.id === device.modelAssetId && candidate.type === "model");
+  const path = asset?.sourceUrl?.trim();
+
+  if (!asset || !path) {
+    return undefined;
+  }
+
+  return {
+    asset,
+    path
+  };
+}
+
+export function getMuseumSceneModelConfig(device: ProjectDevice, assets?: ProjectAsset[]) {
+  const fallback = getMuseumDefaultSceneModelConfig(device);
+  const assetOverride = getMuseumAssetModelOverride(device, assets);
+
+  if (!assetOverride) {
+    return fallback;
+  }
+
+  return {
+    ...(fallback ?? {
+      scale: 2.8,
+      lift: 0.04,
+      yaw: Math.PI * 0.2,
+      pitch: 0
+    }),
+    kind: inferRenderKind(assetOverride.path),
+    path: assetOverride.path
+  };
 }
 
 export function sortDevices(bundle: MuseumProjectBundle) {

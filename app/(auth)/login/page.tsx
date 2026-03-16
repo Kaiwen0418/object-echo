@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { OAuthButtons } from "@/components/auth/OAuthButtons";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -32,24 +31,15 @@ export default async function LoginPage({
         : null;
 
   return (
-    <main className="site-shell">
-      <header className="site-header">
-        <Link className="site-brand" href="/">
-          OBJECT ECHO
-        </Link>
-      </header>
-      <section className="shell auth-shell">
-        <div className="section-eyebrow">Supabase OAuth</div>
-        <h1>Login</h1>
-        <p className="shell-copy">
-          Sign in with GitHub or Google. Apple is intentionally out of scope for this phase because the setup burden is higher.
-        </p>
-        {errorMessage ? <div className="panel auth-alert">{errorMessage}</div> : null}
-        <OAuthButtons redirectTo={getAuthCallbackUrl(next)} enabled={env.enabled} />
-        <p className="inline-note">
-          Provider callback URL in Supabase should point to `/auth/callback` via your app URL.
-        </p>
-      </section>
-    </main>
+    <section className="shell auth-shell">
+      <div className="section-eyebrow">Supabase OAuth</div>
+      <h1>Login</h1>
+      <p className="shell-copy">
+        Sign in with GitHub or Google. Apple is intentionally out of scope for this phase because the setup burden is higher.
+      </p>
+      {errorMessage ? <div className="panel auth-alert">{errorMessage}</div> : null}
+      <OAuthButtons redirectTo={getAuthCallbackUrl(next)} enabled={env.enabled} />
+      <p className="inline-note">Provider callback URL in Supabase should point to `/auth/callback` via your app URL.</p>
+    </section>
   );
 }

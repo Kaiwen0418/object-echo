@@ -1,10 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { MuseumHero } from "@/components/museum/MuseumHero";
 import { MuseumTimeline } from "@/components/museum/MuseumTimeline";
 import { NowPlayingCard } from "@/components/museum/NowPlayingCard";
-import { PREVIEW_RANGE, SNAP_CAPTURE_RADIUS, SNAP_THRESHOLD, sortDevices } from "@/features/museum/lib/config";
+import { ScrambleText } from "@/components/ui/ScrambleText";
+import {
+  PREVIEW_RANGE,
+  SNAP_CAPTURE_RADIUS,
+  SNAP_THRESHOLD,
+  getMuseumSceneModelConfig,
+  sortDevices
+} from "@/features/museum/lib/config";
 import { useMuseumScene, type ProgressCanvas } from "@/features/museum/hooks/useMuseumScene";
 import { clamp, smoothstep } from "@/features/museum/lib/math";
 import type { MuseumProjectBundle } from "@/types";
@@ -23,6 +30,8 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
   const [isScrollInteracting, setIsScrollInteracting] = useState(false);
   const [displayedProgress, setDisplayedProgress] = useState(0);
   const [cardAnimKey, setCardAnimKey] = useState(0);
+  const [modelScale, setModelScale] = useState(1);
+  const [cardScale, setCardScale] = useState(1);
   const canvasRef = useRef<ProgressCanvas | null>(null);
   const scrollIdleTimeoutRef = useRef<number | null>(null);
 
@@ -86,6 +95,8 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
   }, [isInSnapZone, nearestIndex]);
 
   const current = devices[centeredIndex] ?? devices[0];
+  const currentModelConfig = current ? getMuseumSceneModelConfig(current, bundle.assets) : undefined;
+  const isSvgDevice = currentModelConfig?.kind === "svg";
 
   useEffect(() => {
     setCardAnimKey((value) => value + 1);
@@ -119,13 +130,15 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
   const leftMotionGlow = 1 - Math.min(Math.abs(displayPhase) / PREVIEW_RANGE, 1) * 0.55;
   const playerMotionY = -displayPhase * 36;
   const playerMotionGlow = 1 - Math.min(Math.abs(displayPhase) / PREVIEW_RANGE, 1) * 0.55;
-  const summary = current
-    ? `${current.year} · ${current.era} · ${current.specs.map((item) => `${item.label} ${item.value}`).join(" / ")}`
-    : "";
   const museumOpacity = smoothstep(0.18, 0.88, museumReveal);
   const heroOpacity = 1 - smoothstep(0.08, 0.72, museumReveal);
 
-  useMuseumScene(canvasRef, bundle, displayedProgress, darkMode);
+  const { deviceRenderStates } = useMuseumScene(canvasRef, bundle, displayedProgress, darkMode, {
+    modelScaleMultiplier: modelScale,
+    svgCardScaleMultiplier: cardScale,
+    renderSvgBackdrop: false
+  });
+  const isUsingFallbackModel = Boolean(current?.modelAssetId && current && deviceRenderStates[current.id] === "fallback");
 
   const jumpToDevice = (index: number) => {
     document.getElementById(`scene-${index}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -139,7 +152,22 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
 
   return (
     <div className="page">
+      {isSvgDevice ? (
+        <div
+          className="museum-svg-dom-card-layer"
+          style={
+            {
+              "--museum-svg-card-scale": String(cardScale),
+              "--museum-svg-card-opacity": String(museumOpacity)
+            } as CSSProperties
+          }
+          aria-hidden="true"
+        >
+          <div className="museum-svg-dom-card" />
+        </div>
+      ) : null}
       <canvas ref={canvasRef} className="bg-canvas" style={{ opacity: museumOpacity }} />
+      <div className="museum-device-accent-layer" style={{ opacity: museumOpacity }} aria-hidden="true" />
 
       <MuseumHero
         opacity={heroOpacity}
@@ -157,37 +185,104 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
       </button>
 
       <main
-        className="layout overlay"
+        className={`museum-device-shell overlay${isSvgDevice ? " museum-device-shell-svg" : ""}`}
         style={{ opacity: museumOpacity, pointerEvents: museumOpacity > 0.4 ? "auto" : "none" }}
       >
-        <section className="left-rail">
-          <section className="spec-left" style={{ transform: `translateY(${leftMotionY}px)`, opacity: leftMotionGlow }}>
-            <p className="small-caption">{bundle.publishedPage.theme.timelineLabel}</p>
-            <h1 key={`title-${cardAnimKey}`} className="model-title fade-card">
-              {current.name}
-            </h1>
-            <p key={`summary-${cardAnimKey}`} className="model-summary fade-card">
-              {summary}
-            </p>
-          </section>
-
+        <aside className="museum-device-timeline">
           <MuseumTimeline
             devices={devices}
             centeredIndex={centeredIndex}
             displayedProgress={displayedProgress}
             onJump={jumpToDevice}
           />
-        </section>
-      </main>
+        </aside>
 
-      <NowPlayingCard
-        device={current}
-        theme={bundle.publishedPage.theme}
-        museumOpacity={museumOpacity}
-        motionY={playerMotionY}
-        glow={playerMotionGlow}
-        cardKey={cardAnimKey}
-      />
+        <section className={`museum-device-stage${isSvgDevice ? " museum-device-stage-svg" : ""}`}>
+          <div className="museum-device-backword" aria-hidden="true">
+            {current.name}
+          </div>
+          <div
+            className={`museum-device-copy${isSvgDevice ? " museum-device-copy-svg" : ""}`}
+            style={isSvgDevice ? { opacity: leftMotionGlow } : { transform: `translateY(${leftMotionY}px)`, opacity: leftMotionGlow }}
+          >
+            <h1 key={`title-${cardAnimKey}`} className="museum-device-title fade-card">
+              <ScrambleText active={museumOpacity > 0.4} replayToken={cardAnimKey} text="CASIO" settleDurationMs={720} />
+            </h1>
+            <p className="museum-device-summary fade-card">PERSONAL DEVICE MUSEUM</p>
+          </div>
+        </section>
+
+        <aside className="museum-device-panel">
+          <section className="museum-spec-card museum-spec-card-highlight">
+            <div className="museum-spec-header">
+              <div>
+                <div className="museum-spec-label">Device</div>
+                <div className="museum-spec-value">{current.name}</div>
+              </div>
+              <div className="museum-spec-badge museum-spec-badge-highlight">{current.year}</div>
+            </div>
+            <p className="museum-spec-description">{current.era}</p>
+          </section>
+
+          <section className="museum-spec-card">
+            <div className="museum-spec-header">
+              <div>
+                <div className="museum-spec-label">Scene Controls</div>
+                <div className="museum-spec-value">Scale Tuning</div>
+              </div>
+            </div>
+            <div className="museum-control-list">
+              <label className="museum-control">
+                <div className="museum-control-row">
+                  <span className="museum-spec-item-label">Model Size</span>
+                  <span className="museum-spec-item-value">{modelScale.toFixed(2)}x</span>
+                </div>
+                <input
+                  className="museum-control-slider"
+                  type="range"
+                  min="0.7"
+                  max="1.45"
+                  step="0.01"
+                  value={modelScale}
+                  onChange={(event) => setModelScale(Number(event.target.value))}
+                />
+              </label>
+              {isSvgDevice ? (
+                <label className="museum-control">
+                  <div className="museum-control-row">
+                    <span className="museum-spec-item-label">Card Size</span>
+                    <span className="museum-spec-item-value">{cardScale.toFixed(2)}x</span>
+                  </div>
+                  <input
+                    className="museum-control-slider"
+                    type="range"
+                    min="0.7"
+                    max="1.55"
+                    step="0.01"
+                    value={cardScale}
+                    onChange={(event) => setCardScale(Number(event.target.value))}
+                  />
+                </label>
+              ) : null}
+            </div>
+            {isUsingFallbackModel ? (
+              <p className="museum-spec-note">
+                Uploaded model could not be loaded. Showing the default device model instead.
+              </p>
+            ) : null}
+          </section>
+
+          <NowPlayingCard
+            device={current}
+            theme={bundle.publishedPage.theme}
+            museumOpacity={museumOpacity}
+            motionY={playerMotionY}
+            glow={playerMotionGlow}
+            cardKey={cardAnimKey}
+            variant="panel"
+          />
+        </aside>
+      </main>
 
       <section className="scroll-track">
         <section className="hero-spacer" aria-hidden="true" />

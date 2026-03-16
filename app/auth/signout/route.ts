@@ -4,8 +4,10 @@ import { cookies } from "next/headers";
 import { getSupabaseEnv } from "@/lib/supabase/config";
 
 export async function GET(request: Request) {
-  const origin = new URL(request.url).origin;
-  const redirectTo = new URL("/", origin);
+  const requestUrl = new URL(request.url);
+  const origin = requestUrl.origin;
+  const next = requestUrl.searchParams.get("next") ?? "/";
+  const redirectTo = new URL(next, origin);
   const env = getSupabaseEnv();
 
   if (!env.enabled) {
