@@ -20,6 +20,11 @@ type AssetPayload = {
   attribution?: string;
 };
 
+function isAllowedModelAssetSource(value: string) {
+  const normalized = value.toLowerCase();
+  return normalized.endsWith(".glb") || normalized.endsWith(".gltf");
+}
+
 function parseAssets(raw: FormDataEntryValue | null): AssetPayload[] {
   if (typeof raw !== "string") {
     throw new Error("Missing asset payload.");
@@ -52,6 +57,13 @@ function parseAssets(raw: FormDataEntryValue | null): AssetPayload[] {
 
     if (!sourceUrl && !storageKey) {
       throw new Error(`Asset ${index + 1} requires a source URL or storage key.`);
+    }
+
+    if (type === "model") {
+      const modelSource = sourceUrl || storageKey;
+      if (!modelSource || !isAllowedModelAssetSource(modelSource)) {
+        throw new Error(`Asset ${index + 1} must reference a .glb or .gltf model file.`);
+      }
     }
 
     return {

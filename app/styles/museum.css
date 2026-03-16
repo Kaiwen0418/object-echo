@@ -573,6 +573,17 @@
   line-height: 1.55;
 }
 
+.museum-spec-note {
+  margin: 14px 0 0;
+  padding-top: 14px;
+  border-top: 1px dashed color-mix(in oklab, var(--muted) 24%, transparent);
+  color: color-mix(in oklab, var(--accent) 62%, #ff5a1f 38%);
+  font-size: 11px;
+  line-height: 1.55;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .museum-spec-list {
   display: grid;
   gap: 10px;

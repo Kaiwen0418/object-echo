@@ -1,15 +1,22 @@
 "use client";
 
-import { useEffect, useRef, type RefObject } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import type { MuseumProjectBundle, ProjectDevice } from "@/types";
-import { getMuseumSceneModelConfig, sortDevices } from "@/features/museum/lib/config";
+import {
+  getMuseumAssetModelOverride,
+  getMuseumDefaultSceneModelConfig,
+  getMuseumSceneModelConfig,
+  sortDevices
+} from "@/features/museum/lib/config";
 import { clamp, smoothstep } from "@/features/museum/lib/math";
 
 export type ProgressCanvas = HTMLCanvasElement & {
   __updateProgress?: (value: number) => void;
 };
+
+export type MuseumDeviceRenderState = "loading" | "ready" | "fallback";
 
 function createSvgCardTexture(darkMode: boolean) {
   const canvas = document.createElement("canvas");
@@ -230,12 +237,16 @@ export function useMuseumScene(
   }
 ) {
   const targetProgressRef = useRef(progress);
+  const [deviceRenderStates, setDeviceRenderStates] = useState<Record<string, MuseumDeviceRenderState>>({});
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const devices = sortDevices(bundle);
+    setDeviceRenderStates(
+      Object.fromEntries(devices.map((device) => [device.id, "loading" satisfies MuseumDeviceRenderState]))
+    );
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 100);
     camera.position.set(0, 0.35, 5);
@@ -296,48 +307,61 @@ export function useMuseumScene(
     const loader = new GLTFLoader();
     let isDisposed = false;
 
-    devices.forEach((device, index) => {
-      const placeholder = createDeviceObject(device, darkMode);
-      placeholder.position.y = -index * spacing;
-      placeholder.traverse((child: THREE.Object3D) => {
-        if (child instanceof THREE.Mesh) {
-          child.castShadow = !darkMode;
-          child.receiveShadow = !darkMode;
-        }
-      });
-      rail.add(placeholder);
-      deviceMeshes.push(placeholder);
-      loadingPlaceholders.push(placeholder);
-      pendingModelFades.push(null);
-      modelFadeProgress.push(0);
+    const markDeviceState = (deviceId: string, state: MuseumDeviceRenderState) => {
+      setDeviceRenderStates((current) => (current[deviceId] === state ? current : { ...current, [deviceId]: state }));
+    };
 
-      const config = getMuseumSceneModelConfig(device);
-      renderKinds.push(config?.kind ?? "gltf");
-      if (!config) return;
+    const finalizeModelLoad = (
+      modelGroup: THREE.Group,
+      device: ProjectDevice,
+      index: number,
+      config: NonNullable<ReturnType<typeof getMuseumSceneModelConfig>>,
+      renderKind: "gltf" | "svg",
+      state: Exclude<MuseumDeviceRenderState, "loading">
+    ) => {
+      if (isDisposed) return;
 
-      if (config.kind === "svg") {
-        createSvgModelObject(device, config.path, config, darkMode, options?.renderSvgBackdrop !== false, (modelGroup) => {
-          if (isDisposed) return;
+      modelGroup.position.y = -index * spacing;
+      modelGroup.position.y += config.lift;
+      modelGroup.position.x += config.offsetX ?? 0;
+      modelGroup.rotation.y = config.yaw ?? 0;
+      modelGroup.rotation.x = config.pitch ?? 0;
+      modelGroup.userData.renderKind = renderKind;
+      modelGroup.userData.disableShadows = renderKind === "svg";
+      modelGroup.userData.basePosition = modelGroup.position.clone();
+      modelGroup.userData.baseScale = modelGroup.scale.clone();
 
-          modelGroup.position.y = -index * spacing;
-          modelGroup.position.y += config.lift;
-          modelGroup.position.x += config.offsetX ?? 0;
-          modelGroup.rotation.y = config.yaw ?? 0;
-          modelGroup.rotation.x = config.pitch ?? 0;
-          modelGroup.userData.renderKind = "svg";
-          modelGroup.userData.disableShadows = true;
-          modelGroup.userData.basePosition = modelGroup.position.clone();
-          modelGroup.userData.baseScale = modelGroup.scale.clone();
+      setObjectOpacity(modelGroup, 0);
+      rail.add(modelGroup);
+      deviceMeshes[index] = modelGroup;
+      pendingModelFades[index] = modelGroup;
+      modelFadeProgress[index] = 0;
+      markDeviceState(device.id, state);
+    };
 
-          setObjectOpacity(modelGroup, 0);
-          rail.add(modelGroup);
-          deviceMeshes[index] = modelGroup;
-          pendingModelFades[index] = modelGroup;
-          modelFadeProgress[index] = 0;
-        });
-        return;
-      }
+    const loadSvgModel = (
+      device: ProjectDevice,
+      index: number,
+      config: NonNullable<ReturnType<typeof getMuseumSceneModelConfig>>,
+      state: Exclude<MuseumDeviceRenderState, "loading">
+    ) => {
+      createSvgModelObject(
+        device,
+        config.path,
+        config,
+        darkMode,
+        options?.renderSvgBackdrop !== false,
+        (modelGroup) => finalizeModelLoad(modelGroup, device, index, config, "svg", state)
+      );
+    };
 
+    const loadGltfModel = (
+      device: ProjectDevice,
+      index: number,
+      config: NonNullable<ReturnType<typeof getMuseumSceneModelConfig>>,
+      state: Exclude<MuseumDeviceRenderState, "loading">,
+      onError?: () => void
+    ) => {
       loader.load(
         config.path,
         (gltf: { scene: THREE.Group }) => {
@@ -377,20 +401,57 @@ export function useMuseumScene(
           });
 
           modelGroup.add(model);
-          modelGroup.position.y = -index * spacing;
-          modelGroup.userData.renderKind = "gltf";
-          modelGroup.userData.disableShadows = false;
-          modelGroup.userData.basePosition = modelGroup.position.clone();
-          modelGroup.userData.baseScale = modelGroup.scale.clone();
-          setObjectOpacity(modelGroup, 0);
-          rail.add(modelGroup);
-          deviceMeshes[index] = modelGroup;
-          pendingModelFades[index] = modelGroup;
-          modelFadeProgress[index] = 0;
+          finalizeModelLoad(modelGroup, device, index, config, "gltf", state);
         },
         undefined,
-        () => undefined
+        () => onError?.()
       );
+    };
+
+    devices.forEach((device, index) => {
+      const placeholder = createDeviceObject(device, darkMode);
+      placeholder.position.y = -index * spacing;
+      placeholder.traverse((child: THREE.Object3D) => {
+        if (child instanceof THREE.Mesh) {
+          child.castShadow = !darkMode;
+          child.receiveShadow = !darkMode;
+        }
+      });
+      rail.add(placeholder);
+      deviceMeshes.push(placeholder);
+      loadingPlaceholders.push(placeholder);
+      pendingModelFades.push(null);
+      modelFadeProgress.push(0);
+
+      const config = getMuseumSceneModelConfig(device, bundle.assets);
+      const assetOverride = getMuseumAssetModelOverride(device, bundle.assets);
+      const fallbackConfig = getMuseumDefaultSceneModelConfig(device);
+      renderKinds.push(config?.kind ?? "gltf");
+      if (!config) {
+        markDeviceState(device.id, "fallback");
+        return;
+      }
+
+      const loadFallback = () => {
+        if (!assetOverride || !fallbackConfig || fallbackConfig.path === config.path) {
+          markDeviceState(device.id, "fallback");
+          return;
+        }
+
+        renderKinds[index] = fallbackConfig.kind ?? "gltf";
+        if (fallbackConfig.kind === "svg") {
+          loadSvgModel(device, index, fallbackConfig, "fallback");
+          return;
+        }
+        loadGltfModel(device, index, fallbackConfig, "fallback", () => markDeviceState(device.id, "fallback"));
+      };
+
+      if (config.kind === "svg") {
+        loadSvgModel(device, index, config, "ready");
+        return;
+      }
+
+      loadGltfModel(device, index, config, "ready", loadFallback);
     });
 
     scene.add(rail);
@@ -586,4 +647,8 @@ export function useMuseumScene(
   useEffect(() => {
     canvasRef.current?.__updateProgress?.(progress);
   }, [canvasRef, progress]);
+
+  return {
+    deviceRenderStates
+  };
 }

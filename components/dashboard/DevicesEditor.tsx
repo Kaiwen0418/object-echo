@@ -3,11 +3,12 @@
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveDevicesAction, type SaveDevicesState } from "@/app/dashboard/[projectId]/(workspace)/devices/actions";
-import type { ProjectDevice } from "@/types";
+import type { ProjectAsset, ProjectDevice } from "@/types";
 
 type DevicesEditorProps = {
   projectId: string;
   initialDevices: ProjectDevice[];
+  initialAssets: ProjectAsset[];
 };
 
 type DeviceFieldErrors = Record<
@@ -37,7 +38,7 @@ function validateDeviceField(key: "name" | "year", value: string) {
   return undefined;
 }
 
-export function DevicesEditor({ projectId, initialDevices }: DevicesEditorProps) {
+export function DevicesEditor({ projectId, initialDevices, initialAssets }: DevicesEditorProps) {
   const router = useRouter();
   const [state, formAction, isPending] = useActionState<SaveDevicesState, FormData>(
     saveDevicesAction.bind(null, projectId),
@@ -46,6 +47,10 @@ export function DevicesEditor({ projectId, initialDevices }: DevicesEditorProps)
   const [devices, setDevices] = useState(initialDevices);
   const [errors, setErrors] = useState<DeviceFieldErrors>({});
   const serializedDevices = useMemo(() => JSON.stringify(devices), [devices]);
+  const modelAssets = useMemo(
+    () => initialAssets.filter((asset) => asset.type === "model" && (asset.sourceUrl || asset.storageKey)),
+    [initialAssets]
+  );
 
   useEffect(() => {
     if (state.success) {
@@ -53,13 +58,18 @@ export function DevicesEditor({ projectId, initialDevices }: DevicesEditorProps)
     }
   }, [router, state.success]);
 
-  const updateDevice = (index: number, key: "name" | "year", value: string) => {
+  const updateDevice = (index: number, key: "name" | "year" | "modelAssetId", value: string) => {
     setDevices((current) =>
       current.map((device, deviceIndex) =>
         deviceIndex === index
           ? {
               ...device,
-              [key]: key === "year" ? Number(value) : value
+              [key]:
+                key === "year"
+                  ? Number(value)
+                  : key === "modelAssetId"
+                    ? value || undefined
+                    : value
             }
           : device
       )
@@ -67,6 +77,10 @@ export function DevicesEditor({ projectId, initialDevices }: DevicesEditorProps)
 
     const deviceId = devices[index]?.id;
     if (!deviceId) return;
+
+    if (key === "modelAssetId") {
+      return;
+    }
 
     const error = validateDeviceField(key, value);
     setErrors((current) => ({
@@ -193,6 +207,24 @@ export function DevicesEditor({ projectId, initialDevices }: DevicesEditorProps)
                 {errors[device.id]?.year}
               </p>
             ) : null}
+          </div>
+          <div>
+            <label htmlFor={`device-model-${device.id}`}>Model Asset</label>
+            <select
+              id={`device-model-${device.id}`}
+              value={device.modelAssetId ?? ""}
+              onChange={(event) => updateDevice(index, "modelAssetId", event.target.value)}
+            >
+              <option value="">Use default museum model</option>
+              {modelAssets.map((asset) => (
+                <option key={asset.id} value={asset.id}>
+                  {asset.title?.trim() || asset.storageKey || asset.sourceUrl || asset.id}
+                </option>
+              ))}
+            </select>
+            <p className="field-help">
+              Select one of this project&apos;s uploaded model assets to override the default device model.
+            </p>
           </div>
           <div className="inline-actions">
             <button type="button" className="ghost-button" onClick={() => move(index, -1)}>

@@ -3,11 +3,24 @@
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveAssetsAction, type SaveAssetsState } from "@/app/dashboard/[projectId]/(workspace)/assets/actions";
+import { createSupabaseClient } from "@/lib/supabase/client";
 import type { ProjectAsset, SketchfabSearchResult } from "@/types";
 
 type AssetsEditorProps = {
   projectId: string;
   initialAssets: ProjectAsset[];
+};
+
+type SignedUploadPayload = {
+  upload?: {
+    bucket: string;
+    path: string;
+    token: string;
+    signedUrl: string;
+    publicUrl: string;
+    expiresAt: string;
+  };
+  error?: string;
 };
 
 type AssetFieldErrors = Record<
@@ -200,35 +213,49 @@ export function AssetsEditor({ projectId, initialAssets }: AssetsEditorProps) {
     }
   };
 
-  const prepareUpload = async (index: number) => {
+  const uploadFile = async (index: number, file: File) => {
     const asset = assets[index];
     if (!asset) return;
+    const supabase = createSupabaseClient();
+
+    if (!supabase) {
+      setToolStatus((current) => ({
+        ...current,
+        [asset.id]: "Supabase is not configured in this environment."
+      }));
+      return;
+    }
 
     setLoadingTool((current) => ({ ...current, [asset.id]: "upload" }));
-    setToolStatus((current) => ({ ...current, [asset.id]: "Preparing upload slot..." }));
+    setToolStatus((current) => ({ ...current, [asset.id]: "Uploading file..." }));
 
-    const filenameBase = asset.title?.trim() || `${asset.type}-asset`;
-    const extension = asset.type === "audio" ? "mp3" : asset.type === "image" ? "jpg" : "glb";
-    const response = await fetch("/api/upload/storage-sign", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        projectId,
-        kind: asset.type === "audio" ? "audio" : asset.type === "image" ? "images" : "models",
-        filename: `${filenameBase}.${extension}`
-      })
-    });
+    try {
+      const response = await fetch("/api/upload/storage-sign", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          projectId,
+          kind: asset.type === "audio" ? "audio" : asset.type === "image" ? "images" : "models",
+          filename: file.name
+        })
+      });
 
-    const payload = (await response.json()) as {
-      upload?: {
-        path: string;
-        publicUrl: string;
-      };
-    };
+      const payload = (await response.json()) as SignedUploadPayload;
 
-    if (payload.upload) {
+      if (!response.ok || !payload.upload) {
+        throw new Error(payload.error ?? "Failed to prepare upload.");
+      }
+
+      const { error: uploadError } = await supabase.storage
+        .from(payload.upload.bucket)
+        .uploadToSignedUrl(payload.upload.path, payload.upload.token, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
       setAssets((current) =>
         current.map((currentAsset, assetIndex) =>
           assetIndex === index
@@ -236,7 +263,8 @@ export function AssetsEditor({ projectId, initialAssets }: AssetsEditorProps) {
                 ...currentAsset,
                 storageKey: payload.upload?.path,
                 sourceUrl: payload.upload?.publicUrl,
-                sourceType: "upload"
+                sourceType: "upload",
+                title: currentAsset.title || file.name.replace(/\.[^.]+$/, "")
               }
             : currentAsset
         )
@@ -250,11 +278,16 @@ export function AssetsEditor({ projectId, initialAssets }: AssetsEditorProps) {
       }));
       setToolStatus((current) => ({
         ...current,
-        [asset.id]: "Upload slot prepared. TODO: wire this to a real file picker and upload body."
+        [asset.id]: `Uploaded ${file.name}.`
       }));
+    } catch (error) {
+      setToolStatus((current) => ({
+        ...current,
+        [asset.id]: error instanceof Error ? error.message : "Upload failed."
+      }));
+    } finally {
+      setLoadingTool((current) => ({ ...current, [asset.id]: undefined }));
     }
-
-    setLoadingTool((current) => ({ ...current, [asset.id]: undefined }));
   };
 
   return (
@@ -380,15 +413,23 @@ export function AssetsEditor({ projectId, initialAssets }: AssetsEditorProps) {
               ) : null}
               {asset.sourceType === "upload" ? (
                 <div className="inline-actions">
-                  <button
-                    type="button"
-                    className="ghost-button"
-                    disabled={loadingTool[asset.id] === "upload"}
-                    onClick={() => void prepareUpload(index)}
-                  >
-                    {loadingTool[asset.id] === "upload" ? "Preparing..." : "Prepare Upload"}
-                  </button>
-                  <span className="field-help">TODO: replace with file picker + real Supabase Storage upload.</span>
+                  <label className="ghost-button">
+                    <input
+                      type="file"
+                      accept=".glb"
+                      hidden
+                      disabled={loadingTool[asset.id] === "upload"}
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        if (file) {
+                          void uploadFile(index, file);
+                        }
+                        event.currentTarget.value = "";
+                      }}
+                    />
+                    {loadingTool[asset.id] === "upload" ? "Uploading..." : "Choose File"}
+                  </label>
+                  <span className="field-help">Uploads currently support `.glb` directly. `.gltf` remains allowed only as an external URL.</span>
                 </div>
               ) : null}
               {toolStatus[asset.id] ? <p className="field-help">{toolStatus[asset.id]}</p> : null}

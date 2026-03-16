@@ -310,6 +310,47 @@ export async function replaceProjectDevices(
     throw new Error("Project not found.");
   }
 
+  const referencedAssetIds = Array.from(
+    new Set(
+      devices
+        .flatMap((device) => [device.modelAssetId, device.musicAssetId])
+        .filter((assetId): assetId is string => typeof assetId === "string" && assetId.length > 0)
+    )
+  );
+
+  let assetTypeById = new Map<string, ProjectAsset["type"]>();
+
+  if (referencedAssetIds.length > 0) {
+    const { data: assetRows, error: assetError } = await supabase
+      .from("project_assets")
+      .select("id, type")
+      .eq("project_id", projectId)
+      .in("id", referencedAssetIds)
+      .returns<Array<{ id: string; type: ProjectAsset["type"] }>>();
+
+    if (assetError) {
+      throw assetError;
+    }
+
+    assetTypeById = new Map((assetRows ?? []).map((asset) => [asset.id, asset.type]));
+
+    for (const device of devices) {
+      if (device.modelAssetId) {
+        const assetType = assetTypeById.get(device.modelAssetId);
+        if (assetType !== "model") {
+          throw new Error(`Device "${device.name}" references an invalid model asset.`);
+        }
+      }
+
+      if (device.musicAssetId) {
+        const assetType = assetTypeById.get(device.musicAssetId);
+        if (assetType !== "audio") {
+          throw new Error(`Device "${device.name}" references an invalid music asset.`);
+        }
+      }
+    }
+  }
+
   const payload = devices.map((device, index) => ({
     project_id: projectId,
     name: device.name,

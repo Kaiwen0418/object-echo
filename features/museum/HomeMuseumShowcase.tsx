@@ -120,7 +120,8 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
   }, [isInSnapZone, museumReveal, nearestIndex]);
 
   const current = devices[centeredIndex] ?? devices[HERO_DEVICE_INDEX] ?? devices[0];
-  const isSvgDevice = current ? getMuseumSceneModelConfig(current)?.kind === "svg" : false;
+  const currentModelConfig = current ? getMuseumSceneModelConfig(current, bundle.assets) : undefined;
+  const isSvgDevice = currentModelConfig?.kind === "svg";
 
   useEffect(() => {
     setCardAnimKey((value) => value + 1);
@@ -162,7 +163,7 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
   const heroOpacity = 1 - smoothstep(0.06, 0.78, museumReveal);
   const heroIsActive = heroOpacity > 0.66;
 
-  useMuseumScene(canvasRef, bundle, displayedProgress, isDarkMode, {
+  const { deviceRenderStates } = useMuseumScene(canvasRef, bundle, displayedProgress, isDarkMode, {
     heroFocusIndex: HERO_DEVICE_INDEX,
     heroSpinStrength: 0,
     heroSpinCutoff: HERO_DEVICE_INDEX + 0.2,
@@ -170,6 +171,7 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
     svgCardScaleMultiplier: cardScale,
     renderSvgBackdrop: false
   });
+  const isUsingFallbackModel = Boolean(current?.modelAssetId && current && deviceRenderStates[current.id] === "fallback");
 
   const jumpToDevice = (index: number) => {
     document.getElementById(`scene-${index}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -283,6 +285,11 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
                 </label>
               ) : null}
             </div>
+            {isUsingFallbackModel ? (
+              <p className="museum-spec-note">
+                Uploaded model could not be loaded. Showing the default device model instead.
+              </p>
+            ) : null}
           </section>
 
           <NowPlayingCard

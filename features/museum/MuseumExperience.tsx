@@ -95,7 +95,8 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
   }, [isInSnapZone, nearestIndex]);
 
   const current = devices[centeredIndex] ?? devices[0];
-  const isSvgDevice = current ? getMuseumSceneModelConfig(current)?.kind === "svg" : false;
+  const currentModelConfig = current ? getMuseumSceneModelConfig(current, bundle.assets) : undefined;
+  const isSvgDevice = currentModelConfig?.kind === "svg";
 
   useEffect(() => {
     setCardAnimKey((value) => value + 1);
@@ -132,11 +133,12 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
   const museumOpacity = smoothstep(0.18, 0.88, museumReveal);
   const heroOpacity = 1 - smoothstep(0.08, 0.72, museumReveal);
 
-  useMuseumScene(canvasRef, bundle, displayedProgress, darkMode, {
+  const { deviceRenderStates } = useMuseumScene(canvasRef, bundle, displayedProgress, darkMode, {
     modelScaleMultiplier: modelScale,
     svgCardScaleMultiplier: cardScale,
     renderSvgBackdrop: false
   });
+  const isUsingFallbackModel = Boolean(current?.modelAssetId && current && deviceRenderStates[current.id] === "fallback");
 
   const jumpToDevice = (index: number) => {
     document.getElementById(`scene-${index}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -263,6 +265,11 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
                 </label>
               ) : null}
             </div>
+            {isUsingFallbackModel ? (
+              <p className="museum-spec-note">
+                Uploaded model could not be loaded. Showing the default device model instead.
+              </p>
+            ) : null}
           </section>
 
           <NowPlayingCard
