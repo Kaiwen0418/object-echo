@@ -19,6 +19,11 @@ export async function AuthStatus({ compact = false }: AuthStatusProps) {
           <Link className="nav-link" href="/login">
             Login
           </Link>
+          {!compact ? (
+            <Link className="nav-link" href="/signup">
+              Sign up
+            </Link>
+          ) : null}
         </div>
       </div>
     );

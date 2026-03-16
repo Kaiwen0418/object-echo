@@ -17,3 +17,8 @@ export function getAuthCallbackUrl(nextPath = "/dashboard") {
   callback.searchParams.set("next", nextPath);
   return callback.toString();
 }
+
+export function getAppUrl(path = "/") {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  return new URL(path, baseUrl).toString();
+}
