@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { buildSketchfabThumbnailProxyUrl } from "@/features/museum/lib/config";
 
@@ -220,7 +221,7 @@ export function SketchfabViewer({ uid, title, subtitle, previewImageUrl, classNa
       <div className="sketchfab-viewer-frame">
         {previewProxyUrl ? (
           <div className="sketchfab-viewer-poster" aria-hidden="true">
-            <img src={previewProxyUrl} alt="" />
+            <Image src={previewProxyUrl} alt="" fill sizes="(max-width: 1100px) 100vw, 920px" unoptimized />
           </div>
         ) : null}
         <div className="sketchfab-viewer-sheen" aria-hidden="true" />

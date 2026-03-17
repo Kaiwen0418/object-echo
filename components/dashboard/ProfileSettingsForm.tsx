@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveProfileAction, type SaveProfileState } from "@/app/dashboard/(workspace)/profile/actions";
@@ -97,7 +98,7 @@ export function ProfileSettingsForm({ profile, onSaved, onCancel }: ProfileSetti
         <input id="profile-avatar-url" name="avatarUrl" type="hidden" value={avatarUrl} readOnly />
         <div className="profile-avatar-upload">
           <div className={`profile-avatar-upload-preview${avatarUrl ? "" : " profile-avatar-upload-preview-fallback"}`}>
-            {avatarUrl ? <img src={avatarUrl} alt="" /> : null}
+            {avatarUrl ? <Image src={avatarUrl} alt="" fill sizes="104px" unoptimized /> : null}
           </div>
           <div className="stack">
             <label className="ghost-button profile-avatar-upload-button">

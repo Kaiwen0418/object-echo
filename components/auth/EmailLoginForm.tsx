@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -39,7 +40,7 @@ export function EmailLoginForm({ next, enabled }: EmailLoginFormProps) {
       return;
     }
 
-    router.push(next);
+    router.push(next as Route);
     router.refresh();
   };
 

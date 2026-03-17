@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveDevicesAction, type SaveDevicesState } from "@/app/dashboard/[projectId]/(workspace)/devices/actions";
@@ -432,10 +433,13 @@ export function DevicesEditor({ projectId, initialDevices, initialAssets }: Devi
               <div className="device-preview-frame">
                 <span className="device-preview-label">Preview</span>
                 {getModelAsset(device)?.previewImageUrl ? (
-                  <img
+                  <Image
                     className="device-preview-image"
                     src={getSketchfabThumbnailProxyUrl(getModelAsset(device)?.previewImageUrl)}
                     alt={`${device.name} model preview`}
+                    fill
+                    sizes="180px"
+                    unoptimized
                   />
                 ) : (
                   <strong>暂无</strong>
@@ -591,10 +595,13 @@ export function DevicesEditor({ projectId, initialDevices, initialAssets }: Devi
                 <div key={result.id} className="asset-source-result">
                   <div className="asset-source-result-copy">
                     {result.thumbnailUrl ? (
-                      <img
+                      <Image
                         className="asset-source-thumb"
                         src={getSketchfabThumbnailProxyUrl(result.thumbnailUrl)}
                         alt={`${result.name} thumbnail`}
+                        width={112}
+                        height={63}
+                        unoptimized
                       />
                     ) : null}
                     <div>
