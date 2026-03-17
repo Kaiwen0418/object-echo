@@ -1,13 +1,17 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const replaceProjectDevices = vi.fn();
+const syncProjectAssets = vi.fn();
 
 vi.mock("@/lib/utils/project", () => ({
-  replaceProjectDevices
+  replaceProjectDevices,
+  syncProjectAssets
 }));
 
 afterEach(() => {
   vi.clearAllMocks();
+  replaceProjectDevices.mockReset();
+  syncProjectAssets.mockReset();
 });
 
 describe("app/dashboard/[projectId]/(workspace)/devices/actions", () => {
@@ -32,6 +36,7 @@ describe("app/dashboard/[projectId]/(workspace)/devices/actions", () => {
 
     const result = await saveDevicesAction("project-1", {}, formData);
 
+    expect(syncProjectAssets).not.toHaveBeenCalled();
     expect(replaceProjectDevices).toHaveBeenCalledWith("project-1", [
       {
         id: "device-1",
@@ -44,7 +49,7 @@ describe("app/dashboard/[projectId]/(workspace)/devices/actions", () => {
         sortOrder: 0
       }
     ]);
-    expect(result).toEqual({ success: "Devices saved." });
+    expect(result).toEqual({ success: "Collection saved." });
   });
 
   it("rejects missing names", async () => {
@@ -89,5 +94,74 @@ describe("app/dashboard/[projectId]/(workspace)/devices/actions", () => {
     expect(result).toEqual({
       error: "Device 1 has an invalid year."
     });
+  });
+
+  it("saves assets before replacing devices when assetsJson is present", async () => {
+    syncProjectAssets.mockResolvedValueOnce([
+      {
+        id: "persisted-model-1",
+        projectId: "project-1",
+        type: "model",
+        sourceType: "sketchfab",
+        sourceUrl: "https://sketchfab.com/models/c3d445e4e77441eba265504c0391a415/embed",
+        previewImageUrl: "https://media.sketchfab.com/example.jpg",
+        title: "Casio F-91W"
+      }
+    ]);
+    const { saveDevicesAction } = await import("@/app/dashboard/[projectId]/(workspace)/devices/actions");
+    const formData = new FormData();
+    formData.set(
+      "assetsJson",
+      JSON.stringify([
+        {
+          id: "draft_1",
+          type: "model",
+          sourceType: "sketchfab",
+          sourceUrl: "https://sketchfab.com/models/c3d445e4e77441eba265504c0391a415/embed",
+          previewImageUrl: "https://media.sketchfab.com/example.jpg",
+          title: "Casio F-91W"
+        }
+      ])
+    );
+    formData.set(
+      "devicesJson",
+      JSON.stringify([
+        {
+          name: "Casio",
+          year: 2008,
+          modelAssetId: "draft_1",
+          sortOrder: 0
+        }
+      ])
+    );
+
+    await saveDevicesAction("project-1", {}, formData);
+
+    expect(syncProjectAssets).toHaveBeenCalledWith("project-1", [
+      {
+        id: "draft_1",
+        type: "model",
+        sourceType: "sketchfab",
+        sourceUrl: "https://sketchfab.com/models/c3d445e4e77441eba265504c0391a415/embed",
+        previewImageUrl: "https://media.sketchfab.com/example.jpg",
+        storageKey: undefined,
+        title: "Casio F-91W",
+        author: undefined,
+        license: undefined,
+        attribution: undefined
+      }
+    ]);
+    expect(replaceProjectDevices).toHaveBeenCalledWith("project-1", [
+      {
+        id: undefined,
+        name: "Casio",
+        year: 2008,
+        era: "",
+        specs: [],
+        modelAssetId: "persisted-model-1",
+        musicAssetId: undefined,
+        sortOrder: 0
+      }
+    ]);
   });
 });

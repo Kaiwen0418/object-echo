@@ -45,6 +45,7 @@ export type ProjectAsset = {
   type: AssetType;
   sourceType: AssetSourceType;
   sourceUrl?: string;
+  previewImageUrl?: string;
   storageKey?: string;
   title?: string;
   author?: string;

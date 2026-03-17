@@ -1,7 +1,8 @@
 "use server";
 
-import { replaceProjectDevices } from "@/lib/utils/project";
-import type { ProjectDevice } from "@/types";
+import { extractSketchfabUid } from "@/features/museum/lib/config";
+import { replaceProjectDevices, syncProjectAssets } from "@/lib/utils/project";
+import type { ProjectAsset, ProjectDevice } from "@/types";
 
 export type SaveDevicesState = {
   error?: string;
@@ -17,6 +18,19 @@ type DevicePayload = {
   modelAssetId?: string;
   musicAssetId?: string;
   sortOrder: number;
+};
+
+type AssetPayload = {
+  id?: string;
+  type: ProjectAsset["type"];
+  sourceType: ProjectAsset["sourceType"];
+  sourceUrl?: string;
+  previewImageUrl?: string;
+  storageKey?: string;
+  title?: string;
+  author?: string;
+  license?: string;
+  attribution?: string;
 };
 
 function parseDevices(raw: FormDataEntryValue | null): DevicePayload[] {
@@ -60,15 +74,98 @@ function parseDevices(raw: FormDataEntryValue | null): DevicePayload[] {
   });
 }
 
+function isAllowedModelAssetSource(value: string) {
+  const normalized = value.toLowerCase();
+  return normalized.endsWith(".glb") || normalized.endsWith(".gltf") || Boolean(extractSketchfabUid(value));
+}
+
+function parseAssets(raw: FormDataEntryValue | null): AssetPayload[] {
+  if (raw == null) {
+    return [];
+  }
+
+  if (typeof raw !== "string") {
+    throw new Error("Invalid asset payload.");
+  }
+
+  const parsed = JSON.parse(raw) as unknown;
+
+  if (!Array.isArray(parsed)) {
+    throw new Error("Invalid asset payload.");
+  }
+
+  return parsed.map((item, index) => {
+    if (!item || typeof item !== "object") {
+      throw new Error(`Asset ${index + 1} is invalid.`);
+    }
+
+    const candidate = item as Partial<AssetPayload>;
+    const type = candidate.type;
+    const sourceType = candidate.sourceType;
+    const sourceUrl = typeof candidate.sourceUrl === "string" ? candidate.sourceUrl.trim() : "";
+    const storageKey = typeof candidate.storageKey === "string" ? candidate.storageKey.trim() : "";
+
+    if (type !== "model" && type !== "audio" && type !== "image") {
+      throw new Error(`Asset ${index + 1} has an invalid type.`);
+    }
+
+    if (sourceType !== "upload" && sourceType !== "sketchfab" && sourceType !== "external") {
+      throw new Error(`Asset ${index + 1} has an invalid source type.`);
+    }
+
+    if (!sourceUrl && !storageKey) {
+      throw new Error(`Asset ${index + 1} requires a source URL or storage key.`);
+    }
+
+    if (type === "model") {
+      const modelSource = sourceUrl || storageKey;
+      if (!modelSource || !isAllowedModelAssetSource(modelSource)) {
+        throw new Error(`Asset ${index + 1} must reference a .glb/.gltf file or a Sketchfab model URL.`);
+      }
+    }
+
+    return {
+      id: typeof candidate.id === "string" ? candidate.id : undefined,
+      type,
+      sourceType,
+      sourceUrl: sourceUrl || undefined,
+      previewImageUrl: typeof candidate.previewImageUrl === "string" ? candidate.previewImageUrl.trim() || undefined : undefined,
+      storageKey: storageKey || undefined,
+      title: typeof candidate.title === "string" ? candidate.title.trim() || undefined : undefined,
+      author: typeof candidate.author === "string" ? candidate.author.trim() || undefined : undefined,
+      license: typeof candidate.license === "string" ? candidate.license.trim() || undefined : undefined,
+      attribution: typeof candidate.attribution === "string" ? candidate.attribution.trim() || undefined : undefined
+    };
+  });
+}
+
 export async function saveDevicesAction(
   projectId: string,
   _prevState: SaveDevicesState,
   formData: FormData
 ): Promise<SaveDevicesState> {
   try {
+    const assets = parseAssets(formData.get("assetsJson"));
     const devices = parseDevices(formData.get("devicesJson"));
-    await replaceProjectDevices(projectId, devices);
-    return { success: "Devices saved." };
+    const resolvedAssetIdByDraftId = new Map<string, string>();
+
+    if (assets.length > 0) {
+      const savedAssets = await syncProjectAssets(projectId, assets);
+      assets.forEach((asset, index) => {
+        if (asset.id && savedAssets[index]?.id) {
+          resolvedAssetIdByDraftId.set(asset.id, savedAssets[index].id);
+        }
+      });
+    }
+
+    const resolvedDevices = devices.map((device) => ({
+      ...device,
+      modelAssetId: device.modelAssetId ? resolvedAssetIdByDraftId.get(device.modelAssetId) ?? device.modelAssetId : undefined,
+      musicAssetId: device.musicAssetId ? resolvedAssetIdByDraftId.get(device.musicAssetId) ?? device.musicAssetId : undefined
+    }));
+
+    await replaceProjectDevices(projectId, resolvedDevices);
+    return { success: "Collection saved." };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to save devices.";
     return { error: message };

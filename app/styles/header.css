@@ -192,27 +192,36 @@
 .nav-link,
 .ghost-button,
 .primary-button {
-  padding: 0;
-  border: 0;
+  padding: 8px 12px;
+  border: 1px solid transparent;
   background: transparent;
   font-family: "Space Mono", monospace;
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  transition: color 0.18s ease, opacity 0.18s ease, transform 0.18s ease;
+  transition: color 0.18s ease, opacity 0.18s ease, transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
 }
 
 .nav-link:hover,
 .ghost-button:hover,
 .primary-button:hover,
 .auth-status-trigger:hover {
-  background: transparent;
+  background: color-mix(in oklab, var(--soft) 74%, transparent);
   color: var(--muted);
   transform: translateY(-1px);
 }
 
 .primary-button {
   color: var(--text);
+  border-color: color-mix(in oklab, var(--text) 18%, transparent);
+}
+
+body.dark .ghost-button,
+body.dark .primary-button {
+  padding: 8px 12px;
+  border: 1px solid rgba(0, 255, 65, 0.34);
+  background: rgba(0, 255, 65, 0.08);
+  color: #e8ffe8;
 }
 
 body.dark .site-brand-mark {
@@ -233,6 +242,7 @@ body.dark .ghost-button:hover,
 body.dark .primary-button:hover,
 body.dark .auth-status-trigger:hover {
   color: #00ff41;
+  background: rgba(0, 255, 65, 0.14);
 }
 
 .auth-status {

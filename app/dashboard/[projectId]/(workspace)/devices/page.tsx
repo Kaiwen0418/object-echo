@@ -19,8 +19,8 @@ export default async function DevicesPage({
         <Link className="dashboard-back-link" href={`/dashboard/${projectId}`}>
           Back
         </Link>
-        <div className="section-eyebrow">Editable device list</div>
-        <h1>Devices</h1>
+        <div className="section-eyebrow">Collection editor</div>
+        <h1>Devices & Media</h1>
       </div>
       <DevicesEditor projectId={projectId} initialDevices={bundle.devices} initialAssets={bundle.assets} />
     </section>

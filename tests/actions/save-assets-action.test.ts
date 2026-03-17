@@ -17,13 +17,14 @@ describe("app/dashboard/[projectId]/(workspace)/assets/actions", () => {
     formData.set(
       "assetsJson",
       JSON.stringify([
-        {
-          id: "asset-1",
-          type: "model",
-          sourceType: "upload",
-          sourceUrl: "https://cdn.example.com/device.glb",
-          title: "Device Model"
-        },
+      {
+        id: "asset-1",
+        type: "model",
+        sourceType: "upload",
+        sourceUrl: "https://cdn.example.com/device.glb",
+        previewImageUrl: "https://cdn.example.com/device.jpg",
+        title: "Device Model"
+      },
         {
           id: "asset-2",
           type: "audio",
@@ -42,6 +43,7 @@ describe("app/dashboard/[projectId]/(workspace)/assets/actions", () => {
         type: "model",
         sourceType: "upload",
         sourceUrl: "https://cdn.example.com/device.glb",
+        previewImageUrl: "https://cdn.example.com/device.jpg",
         storageKey: undefined,
         title: "Device Model",
         author: undefined,

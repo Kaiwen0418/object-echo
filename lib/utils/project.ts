@@ -37,6 +37,7 @@ type ProjectAssetRow = {
   type: ProjectAsset["type"];
   source_type: ProjectAsset["sourceType"];
   source_url: string | null;
+  preview_image_url: string | null;
   storage_key: string | null;
   title: string | null;
   author: string | null;
@@ -97,6 +98,7 @@ function mapProjectAsset(row: ProjectAssetRow): ProjectAsset {
     type: row.type,
     sourceType: row.source_type,
     sourceUrl: row.source_url ?? undefined,
+    previewImageUrl: row.preview_image_url ?? undefined,
     storageKey: row.storage_key ?? undefined,
     title: row.title ?? undefined,
     author: row.author ?? undefined,
@@ -509,6 +511,7 @@ export async function syncProjectAssets(
     type: ProjectAsset["type"];
     sourceType: ProjectAsset["sourceType"];
     sourceUrl?: string;
+    previewImageUrl?: string;
     storageKey?: string;
     title?: string;
     author?: string;
@@ -565,12 +568,15 @@ export async function syncProjectAssets(
     }
   }
 
+  const savedAssets: ProjectAsset[] = [];
+
   for (const asset of assets) {
     const payload = {
       project_id: projectId,
       type: asset.type,
       source_type: asset.sourceType,
       source_url: asset.sourceUrl ?? null,
+      preview_image_url: asset.previewImageUrl ?? null,
       storage_key: asset.storageKey ?? null,
       title: asset.title ?? null,
       author: asset.author ?? null,
@@ -579,33 +585,34 @@ export async function syncProjectAssets(
     };
 
     if (asset.id && existingIds.has(asset.id)) {
-      const { error } = await supabase.from("project_assets").update(payload).eq("id", asset.id).eq("project_id", projectId);
+      const { data: updatedAsset, error } = await supabase
+        .from("project_assets")
+        .update(payload)
+        .eq("id", asset.id)
+        .eq("project_id", projectId)
+        .select("*")
+        .single<ProjectAssetRow>();
 
       if (error) {
         throw error;
       }
+      savedAssets.push(mapProjectAsset(updatedAsset));
       continue;
     }
 
-    const { error } = await supabase.from("project_assets").insert(payload);
+    const { data: insertedAsset, error } = await supabase
+      .from("project_assets")
+      .insert(payload)
+      .select("*")
+      .single<ProjectAssetRow>();
 
     if (error) {
       throw error;
     }
+    savedAssets.push(mapProjectAsset(insertedAsset));
   }
 
-  const { data, error } = await supabase
-    .from("project_assets")
-    .select("*")
-    .eq("project_id", projectId)
-    .order("created_at", { ascending: true })
-    .returns<ProjectAssetRow[]>();
-
-  if (error) {
-    throw error;
-  }
-
-  return (data ?? []).map(mapProjectAsset);
+  return savedAssets;
 }
 
 export async function getProjectById(projectId: string): Promise<MuseumProjectBundle | undefined> {

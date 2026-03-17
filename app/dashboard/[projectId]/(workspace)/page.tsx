@@ -14,21 +14,18 @@ export default async function ProjectOverviewPage({
 
   return (
     <section className="section-row">
+      <Link className="dashboard-back-link" href="/dashboard">
+        Back
+      </Link>
       <article className="panel">
-        <Link className="dashboard-back-link" href="/dashboard">
-          Back
-        </Link>
         <div className="section-eyebrow">Project overview</div>
         <h1>{bundle.project.title}</h1>
         <p>{bundle.project.description}</p>
         <p>Devices: {bundle.devices.length}</p>
         <p>Assets: {bundle.assets.length}</p>
         <div className="inline-actions">
-          <Link className="primary-button" href={`/dashboard/${projectId}/assets`}>
-            Upload Assets
-          </Link>
-          <Link className="ghost-button" href={`/dashboard/${projectId}/devices`}>
-            Edit Devices
+          <Link className="primary-button" href={`/dashboard/${projectId}/devices`}>
+            Edit Collection
           </Link>
           <Link className="ghost-button" href={`/dashboard/${projectId}/preview`}>
             Preview Museum

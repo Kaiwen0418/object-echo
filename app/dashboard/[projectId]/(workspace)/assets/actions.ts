@@ -14,6 +14,7 @@ type AssetPayload = {
   type: ProjectAsset["type"];
   sourceType: ProjectAsset["sourceType"];
   sourceUrl?: string;
+  previewImageUrl?: string;
   storageKey?: string;
   title?: string;
   author?: string;
@@ -72,6 +73,7 @@ function parseAssets(raw: FormDataEntryValue | null): AssetPayload[] {
       type,
       sourceType,
       sourceUrl: sourceUrl || undefined,
+      previewImageUrl: typeof candidate.previewImageUrl === "string" ? candidate.previewImageUrl.trim() || undefined : undefined,
       storageKey: storageKey || undefined,
       title: typeof candidate.title === "string" ? candidate.title.trim() || undefined : undefined,
       author: typeof candidate.author === "string" ? candidate.author.trim() || undefined : undefined,
