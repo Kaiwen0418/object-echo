@@ -66,6 +66,7 @@ type SketchfabViewerProps = {
   subtitle?: string;
   previewImageUrl?: string;
   className?: string;
+  active?: boolean;
 };
 
 let scriptLoadPromise: Promise<void> | undefined;
@@ -126,7 +127,7 @@ function suppressAnnotations(api: {
   });
 }
 
-export function SketchfabViewer({ uid, title, subtitle, previewImageUrl, className }: SketchfabViewerProps) {
+export function SketchfabViewer({ uid, title, subtitle, previewImageUrl, className, active = true }: SketchfabViewerProps) {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const apiRef = useRef<{ start: () => void } | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
@@ -215,7 +216,7 @@ export function SketchfabViewer({ uid, title, subtitle, previewImageUrl, classNa
   }, [uid]);
 
   return (
-    <section className={className ? `sketchfab-viewer ${className}` : "sketchfab-viewer"}>
+    <section className={`${className ? `sketchfab-viewer ${className}` : "sketchfab-viewer"}${active ? " is-active" : " is-cached"}`}>
       <div className="sketchfab-viewer-frame">
         {previewProxyUrl ? (
           <div className="sketchfab-viewer-poster" aria-hidden="true">
@@ -230,7 +231,7 @@ export function SketchfabViewer({ uid, title, subtitle, previewImageUrl, classNa
         </div>
         <iframe ref={iframeRef} title={title} allow="autoplay; fullscreen; xr-spatial-tracking" />
       </div>
-      <div className="sketchfab-viewer-toolbar">
+      <div className="sketchfab-viewer-toolbar" aria-hidden={!active}>
         <span className={`sketchfab-viewer-status is-${status}`}>
           {status === "ready" ? "Viewer Ready" : status === "error" ? "Viewer Error" : "Loading Viewer"}
         </span>

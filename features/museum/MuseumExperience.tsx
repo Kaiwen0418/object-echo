@@ -12,6 +12,8 @@ type MuseumExperienceProps = {
   bundle: MuseumProjectBundle;
 };
 
+type ViewerModel = NonNullable<ReturnType<typeof getMuseumViewerModel>>;
+
 export function MuseumExperience({ bundle }: MuseumExperienceProps) {
   const devices = useMemo(() => sortDevices(bundle), [bundle]);
   const [darkMode, setDarkMode] = useState(bundle.publishedPage.theme.darkModeDefault);
@@ -19,7 +21,12 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
   const [displayedProgress, setDisplayedProgress] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isScrollInteracting, setIsScrollInteracting] = useState(false);
+  const [cachedViewerModels, setCachedViewerModels] = useState<ViewerModel[]>([]);
   const scrollIdleTimeoutRef = useRef<number | null>(null);
+  const viewerModelsByIndex = useMemo(
+    () => devices.map((device) => getMuseumViewerModel(device, bundle.assets)),
+    [bundle.assets, devices]
+  );
 
   useEffect(() => {
     document.body.classList.toggle("dark", darkMode);
@@ -82,11 +89,35 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
     return () => window.cancelAnimationFrame(raf);
   }, [centeredIndex, isScrollInteracting, scrollProgress]);
 
+  useEffect(() => {
+    const candidates = [centeredIndex - 1, centeredIndex, centeredIndex + 1]
+      .map((index) => viewerModelsByIndex[index])
+      .filter((model): model is ViewerModel => Boolean(model));
+
+    if (!candidates.length) {
+      return;
+    }
+
+    setCachedViewerModels((currentModels) => {
+      const nextModels = [...currentModels];
+
+      for (const candidate of candidates) {
+        const existingIndex = nextModels.findIndex((model) => model.uid === candidate.uid);
+        if (existingIndex >= 0) {
+          nextModels.splice(existingIndex, 1);
+        }
+        nextModels.push(candidate);
+      }
+
+      return nextModels.slice(-4);
+    });
+  }, [centeredIndex, viewerModelsByIndex]);
+
   const current = devices[centeredIndex] ?? devices[0];
   const currentAudioAsset = current?.musicAssetId
     ? bundle.assets.find((asset) => asset.id === current.musicAssetId && asset.type === "audio")
     : undefined;
-  const viewerModel = current ? getMuseumViewerModel(current, bundle.assets) : undefined;
+  const viewerModel = viewerModelsByIndex[centeredIndex];
   const viewerBackdrop = buildSketchfabThumbnailProxyUrl(viewerModel?.previewImageUrl);
   const displayPhase = displayedProgress - centeredIndex;
   const playerMotionY = -displayPhase * 36;
@@ -101,10 +132,6 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
   return (
     <div className="page museum-viewer-page">
       <div className="museum-viewer-backdrop" aria-hidden="true" />
-
-      <button type="button" className="mode-btn overlay" onClick={() => setDarkMode((value) => !value)}>
-        {darkMode ? "LIGHT" : "DARK"}
-      </button>
 
       <main className="museum-device-shell overlay">
         <aside className="museum-device-timeline">
@@ -127,14 +154,19 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
           </div>
 
           {viewerModel ? (
-            <SketchfabViewer
-              key={viewerModel.uid}
-              uid={viewerModel.uid}
-              title={viewerModel.title}
-              subtitle={`${current.year} · ${current.era || "Archive"}`}
-              previewImageUrl={viewerModel.previewImageUrl}
-              className="museum-viewer-card"
-            />
+            <div className="museum-viewer-stack">
+              {cachedViewerModels.map((cachedViewerModel) => (
+                <SketchfabViewer
+                  key={cachedViewerModel.uid}
+                  uid={cachedViewerModel.uid}
+                  title={cachedViewerModel.title}
+                  subtitle={`${current.year} · ${current.era || "Archive"}`}
+                  previewImageUrl={cachedViewerModel.previewImageUrl}
+                  className="museum-viewer-card"
+                  active={cachedViewerModel.uid === viewerModel.uid}
+                />
+              ))}
+            </div>
           ) : (
             <section className="museum-viewer-empty panel">
               <h2>No interactive model attached</h2>

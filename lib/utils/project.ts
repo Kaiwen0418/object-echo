@@ -1,4 +1,5 @@
 import { demoBundle, demoProjects, demoTheme } from "@/data/demo/projects";
+import { MAX_PROJECTS_PER_USER } from "@/lib/limits";
 import { createSupabaseAdminClient, createSupabaseServerClient, getCurrentSupabaseUser } from "@/lib/supabase/server";
 import type {
   MuseumProjectBundle,
@@ -375,6 +376,19 @@ export async function createProject(input: {
 
   await ensureCurrentUserProfile();
 
+  const { count, error: countError } = await supabase
+    .from("projects")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id);
+
+  if (countError) {
+    throw new Error(countError.message);
+  }
+
+  if ((count ?? 0) >= MAX_PROJECTS_PER_USER) {
+    throw new Error(`You can create up to ${MAX_PROJECTS_PER_USER} projects.`);
+  }
+
   const { data, error } = await supabase
     .from("projects")
     .insert({
@@ -391,6 +405,106 @@ export async function createProject(input: {
   }
 
   return mapProject(data);
+}
+
+export async function publishProject(projectId: string) {
+  const supabase = await createSupabaseServerClient();
+  const user = await getCurrentSupabaseUser();
+
+  if (!supabase || !user) {
+    throw new Error("You must be signed in to publish a project.");
+  }
+
+  const { data: project, error: projectError } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("id", projectId)
+    .eq("user_id", user.id)
+    .maybeSingle<ProjectRow>();
+
+  if (projectError) {
+    throw new Error(projectError.message);
+  }
+
+  if (!project) {
+    throw new Error("Project not found.");
+  }
+
+  const { data: existingPublishedPage, error: existingPublishedPageError } = await supabase
+    .from("published_pages")
+    .select("*")
+    .eq("project_id", projectId)
+    .maybeSingle<PublishedPageRow>();
+
+  if (existingPublishedPageError) {
+    throw new Error(existingPublishedPageError.message);
+  }
+
+  const { error: publishError } = await supabase.from("published_pages").upsert(
+    {
+      project_id: projectId,
+      slug: project.slug,
+      title: project.title,
+      description: project.description,
+      theme: existingPublishedPage?.theme ?? demoTheme,
+      published_at: new Date().toISOString()
+    },
+    { onConflict: "project_id" }
+  );
+
+  if (publishError) {
+    throw new Error(publishError.message);
+  }
+
+  const { error: updateProjectError } = await supabase
+    .from("projects")
+    .update({ status: "published" satisfies Project["status"] })
+    .eq("id", projectId)
+    .eq("user_id", user.id);
+
+  if (updateProjectError) {
+    throw new Error(updateProjectError.message);
+  }
+}
+
+export async function unpublishProject(projectId: string) {
+  const supabase = await createSupabaseServerClient();
+  const user = await getCurrentSupabaseUser();
+
+  if (!supabase || !user) {
+    throw new Error("You must be signed in to unpublish a project.");
+  }
+
+  const { data: project, error: projectError } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("id", projectId)
+    .eq("user_id", user.id)
+    .maybeSingle<{ id: string }>();
+
+  if (projectError) {
+    throw new Error(projectError.message);
+  }
+
+  if (!project) {
+    throw new Error("Project not found.");
+  }
+
+  const { error: deletePublishedPageError } = await supabase.from("published_pages").delete().eq("project_id", projectId);
+
+  if (deletePublishedPageError) {
+    throw new Error(deletePublishedPageError.message);
+  }
+
+  const { error: updateProjectError } = await supabase
+    .from("projects")
+    .update({ status: "draft" satisfies Project["status"] })
+    .eq("id", projectId)
+    .eq("user_id", user.id);
+
+  if (updateProjectError) {
+    throw new Error(updateProjectError.message);
+  }
 }
 
 export async function replaceProjectDevices(
@@ -646,6 +760,7 @@ export async function getProjectBySlug(slug: string): Promise<MuseumProjectBundl
     .from("published_pages")
     .select("*")
     .eq("slug", slug)
+    .not("published_at", "is", null)
     .maybeSingle<PublishedPageRow>();
 
   if (!publishedPage) {

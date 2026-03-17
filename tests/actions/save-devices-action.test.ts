@@ -96,6 +96,28 @@ describe("app/dashboard/[projectId]/(workspace)/devices/actions", () => {
     });
   });
 
+  it("rejects projects with more than 10 devices", async () => {
+    const { saveDevicesAction } = await import("@/app/dashboard/[projectId]/(workspace)/devices/actions");
+    const formData = new FormData();
+    formData.set(
+      "devicesJson",
+      JSON.stringify(
+        Array.from({ length: 11 }, (_, index) => ({
+          name: `Device ${index + 1}`,
+          year: 2000 + index,
+          sortOrder: index
+        }))
+      )
+    );
+
+    const result = await saveDevicesAction("project-1", {}, formData);
+
+    expect(replaceProjectDevices).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      error: "Each project can have up to 10 devices."
+    });
+  });
+
   it("saves assets before replacing devices when assetsJson is present", async () => {
     syncProjectAssets.mockResolvedValueOnce([
       {

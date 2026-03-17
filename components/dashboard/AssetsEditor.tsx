@@ -256,7 +256,8 @@ export function AssetsEditor({ projectId, initialAssets }: AssetsEditorProps) {
         body: JSON.stringify({
           projectId,
           kind: asset.type,
-          filename: file.name
+          filename: file.name,
+          fileSize: file.size
         })
       });
 

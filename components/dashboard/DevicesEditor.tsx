@@ -330,7 +330,8 @@ export function DevicesEditor({ projectId, initialDevices, initialAssets }: Devi
         body: JSON.stringify({
           projectId,
           kind: "audio",
-          filename: file.name
+          filename: file.name,
+          fileSize: file.size
         })
       });
 

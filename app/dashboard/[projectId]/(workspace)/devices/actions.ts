@@ -1,6 +1,7 @@
 "use server";
 
 import { extractSketchfabUid } from "@/features/museum/lib/config";
+import { MAX_DEVICES_PER_PROJECT } from "@/lib/limits";
 import { replaceProjectDevices, syncProjectAssets } from "@/lib/utils/project";
 import type { ProjectAsset, ProjectDevice } from "@/types";
 
@@ -159,6 +160,11 @@ export async function saveDevicesAction(
   try {
     const assets = parseAssets(formData.get("assetsJson"));
     const devices = parseDevices(formData.get("devicesJson"));
+
+    if (devices.length > MAX_DEVICES_PER_PROJECT) {
+      throw new Error(`Each project can have up to ${MAX_DEVICES_PER_PROJECT} devices.`);
+    }
+
     const resolvedAssetIdByDraftId = new Map<string, string>();
 
     if (assets.length > 0) {

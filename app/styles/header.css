@@ -4,6 +4,15 @@
   background: var(--bg);
 }
 
+.site-shell-immersive {
+  padding-bottom: 0;
+}
+
+.site-shell-immersive .marketing-header,
+.site-shell-immersive .dashboard-header {
+  margin-bottom: 0;
+}
+
 .site-header,
 .shell {
   width: min(var(--max-width), 100%);
@@ -28,8 +37,8 @@
   padding: 20px 24px;
   border: 0;
   border-bottom: 1px solid color-mix(in oklab, var(--text) 22%, transparent);
-  background: transparent;
-  backdrop-filter: none;
+  background: color-mix(in oklab, var(--bg) 90%, white 10%);
+  backdrop-filter: blur(14px);
   overflow: visible;
 }
 
@@ -40,7 +49,8 @@
   width: auto;
   margin: 0 0 32px;
   padding: 14px 0;
-  backdrop-filter: blur(10px);
+  background: color-mix(in oklab, var(--bg) 92%, white 8%);
+  backdrop-filter: blur(12px);
 }
 
 .marketing-header .nav-link,
@@ -222,6 +232,14 @@ body.dark .primary-button {
   border: 1px solid rgba(0, 255, 65, 0.34);
   background: rgba(0, 255, 65, 0.08);
   color: #e8ffe8;
+}
+
+body.dark .marketing-header {
+  background: color-mix(in oklab, var(--bg) 90%, black 10%);
+}
+
+body.dark .dashboard-header {
+  background: color-mix(in oklab, var(--bg) 92%, black 8%);
 }
 
 body.dark .site-brand-mark {

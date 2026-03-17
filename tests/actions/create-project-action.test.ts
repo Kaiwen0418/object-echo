@@ -15,7 +15,6 @@ describe("app/dashboard/new/actions", () => {
     const { createProjectAction } = await import("@/app/dashboard/new/actions");
     const formData = new FormData();
     formData.set("title", "");
-    formData.set("slug", "");
     formData.set("description", "desc");
 
     const result = await createProjectAction({}, formData);
@@ -31,7 +30,6 @@ describe("app/dashboard/new/actions", () => {
     const { createProjectAction } = await import("@/app/dashboard/new/actions");
     const formData = new FormData();
     formData.set("title", "My New Museum");
-    formData.set("slug", "");
     formData.set("description", "desc");
 
     const result = await createProjectAction({}, formData);
@@ -47,18 +45,17 @@ describe("app/dashboard/new/actions", () => {
     });
   });
 
-  it("maps duplicate slug errors to field errors", async () => {
+  it("maps duplicate slug errors to title field errors", async () => {
     createProject.mockRejectedValueOnce(new Error('duplicate key value violates unique constraint "projects_slug_key"'));
     const { createProjectAction } = await import("@/app/dashboard/new/actions");
     const formData = new FormData();
     formData.set("title", "Museum");
-    formData.set("slug", "museum");
     formData.set("description", "");
 
     const result = await createProjectAction({}, formData);
 
     expect(result).toEqual({
-      fieldErrors: { slug: "That slug is already in use." }
+      fieldErrors: { title: "A project with this name already exists." }
     });
   });
 
@@ -67,7 +64,6 @@ describe("app/dashboard/new/actions", () => {
     const { createProjectAction } = await import("@/app/dashboard/new/actions");
     const formData = new FormData();
     formData.set("title", "Museum");
-    formData.set("slug", "museum");
     formData.set("description", "");
 
     const result = await createProjectAction({}, formData);

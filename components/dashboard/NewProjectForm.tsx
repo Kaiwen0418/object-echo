@@ -8,21 +8,14 @@ const initialState: CreateProjectState = {};
 
 type FormErrors = {
   title?: string;
-  slug?: string;
 };
-
-function slugify(input: string) {
-  return input
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
 
 export function NewProjectForm() {
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(createProjectAction, initialState);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
 
   useEffect(() => {
     if (!state.projectId) return;
@@ -32,16 +25,9 @@ export function NewProjectForm() {
   const validate = (formData: FormData) => {
     const nextErrors: FormErrors = {};
     const title = formData.get("title");
-    const slug = formData.get("slug");
 
     if (typeof title !== "string" || !title.trim()) {
       nextErrors.title = "Project title is required.";
-    }
-
-    const resolvedSlug = slugify(typeof slug === "string" && slug.trim() ? slug : typeof title === "string" ? title : "");
-
-    if (!resolvedSlug) {
-      nextErrors.slug = "Slug is required.";
     }
 
     setErrors(nextErrors);
@@ -66,19 +52,10 @@ export function NewProjectForm() {
           return;
         }
 
-        if (target.name === "title" && (errors.title || errors.slug)) {
+        if (target.name === "title" && errors.title) {
           setErrors((current) => ({
             ...current,
-            title: target.value.trim() ? undefined : current.title,
-            slug: slugify(target.value) ? undefined : current.slug
-          }));
-          return;
-        }
-
-        if (target.name === "slug" && errors.slug) {
-          setErrors((current) => ({
-            ...current,
-            slug: slugify(target.value) ? undefined : current.slug
+            title: target.value.trim() ? undefined : current.title
           }));
         }
       }}
@@ -88,7 +65,9 @@ export function NewProjectForm() {
         <input
           id="title"
           name="title"
+          value={title}
           placeholder="Blueberry Device Museum"
+          onChange={(event) => setTitle(event.target.value)}
           aria-invalid={Boolean(errors.title || state.fieldErrors?.title)}
           aria-describedby={errors.title || state.fieldErrors?.title ? "project-title-error" : undefined}
         />
@@ -99,26 +78,15 @@ export function NewProjectForm() {
         ) : null}
       </div>
       <div>
-        <label htmlFor="slug">Slug</label>
-        <input
-          id="slug"
-          name="slug"
-          placeholder="blueberry-device-museum"
-          aria-invalid={Boolean(errors.slug || state.fieldErrors?.slug)}
-          aria-describedby={errors.slug || state.fieldErrors?.slug ? "project-slug-error" : "project-slug-help"}
-        />
-        <p id="project-slug-help" className="field-help">
-          Leave blank to generate it from the project title.
-        </p>
-        {errors.slug || state.fieldErrors?.slug ? (
-          <p id="project-slug-error" className="field-error">
-            {errors.slug ?? state.fieldErrors?.slug}
-          </p>
-        ) : null}
-      </div>
-      <div>
         <label htmlFor="description">Description</label>
-        <textarea id="description" name="description" rows={5} placeholder="Describe the collection and mood." />
+        <textarea
+          id="description"
+          name="description"
+          rows={5}
+          value={description}
+          onChange={(event) => setDescription(event.target.value)}
+          placeholder="Describe the collection and mood."
+        />
       </div>
       {state.error ? <div className="panel auth-alert">{state.error}</div> : null}
       {state.success ? <p className="field-success">{state.success}</p> : null}

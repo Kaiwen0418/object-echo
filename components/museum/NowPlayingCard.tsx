@@ -1,5 +1,5 @@
-import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { AudioEraArtwork } from "@/components/museum/AudioEraArtwork";
 import type { ProjectAsset, ProjectDevice, ThemeConfig } from "@/types";
 
 type NowPlayingCardProps = {
@@ -94,14 +94,7 @@ export function NowPlayingCard({
     >
       <div className="small-caption">{variant === "panel" ? "SOUNDTRACK" : "NOW PLAYING"}</div>
       <div className="player-wrap">
-        <Image
-          className="cover-lg"
-          src={theme.soundtrackCoverUrl}
-          alt={`${device.name} era artwork`}
-          width={150}
-          height={150}
-          unoptimized
-        />
+        <AudioEraArtwork device={device} />
         <div>
           <div className="player-actions">
             <div className="track-title">{trackTitle}</div>
