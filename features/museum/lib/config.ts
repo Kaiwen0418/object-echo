@@ -118,6 +118,14 @@ export function buildSketchfabViewerUrl(uid: string) {
   return `https://sketchfab.com/3d-models/${uid}`;
 }
 
+export function buildSketchfabThumbnailProxyUrl(url?: string) {
+  if (!url) {
+    return undefined;
+  }
+
+  return `/api/media/sketchfab-thumbnail?url=${encodeURIComponent(url)}`;
+}
+
 export function extractSketchfabUid(value?: string) {
   if (!value) return undefined;
 
@@ -186,6 +194,7 @@ export function getMuseumViewerModel(device: ProjectDevice, assets?: ProjectAsse
       title: asset.title ?? device.name,
       embedUrl: buildSketchfabEmbedUrl(assetUid),
       viewerUrl: buildSketchfabViewerUrl(assetUid),
+      previewImageUrl: asset.previewImageUrl,
       author: asset.author,
       license: asset.license,
       attribution: asset.attribution,
@@ -201,6 +210,7 @@ export function getMuseumViewerModel(device: ProjectDevice, assets?: ProjectAsse
     title: fallback.title,
     embedUrl: buildSketchfabEmbedUrl(fallback.uid),
     viewerUrl: buildSketchfabViewerUrl(fallback.uid),
+    previewImageUrl: asset?.previewImageUrl,
     author: fallback.author,
     license: fallback.license,
     attribution: fallback.attribution,

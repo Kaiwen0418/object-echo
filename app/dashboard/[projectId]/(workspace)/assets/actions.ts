@@ -22,6 +22,18 @@ type AssetPayload = {
   attribution?: string;
 };
 
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (error && typeof error === "object" && "message" in error && typeof error.message === "string") {
+    return error.message;
+  }
+
+  return fallback;
+}
+
 function isAllowedModelAssetSource(value: string) {
   const normalized = value.toLowerCase();
   return normalized.endsWith(".glb") || normalized.endsWith(".gltf") || Boolean(extractSketchfabUid(value));
@@ -93,7 +105,6 @@ export async function saveAssetsAction(
     await syncProjectAssets(projectId, assets);
     return { success: "Assets saved." };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to save assets.";
-    return { error: message };
+    return { error: getErrorMessage(error, "Failed to save assets.") };
   }
 }

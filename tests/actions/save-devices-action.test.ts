@@ -164,4 +164,40 @@ describe("app/dashboard/[projectId]/(workspace)/devices/actions", () => {
       }
     ]);
   });
+
+  it("surfaces non-Error messages from downstream failures", async () => {
+    syncProjectAssets.mockRejectedValueOnce({ message: 'column "preview_image_url" of relation "project_assets" does not exist' });
+    const { saveDevicesAction } = await import("@/app/dashboard/[projectId]/(workspace)/devices/actions");
+    const formData = new FormData();
+    formData.set(
+      "assetsJson",
+      JSON.stringify([
+        {
+          id: "draft_1",
+          type: "model",
+          sourceType: "sketchfab",
+          sourceUrl: "https://sketchfab.com/models/c3d445e4e77441eba265504c0391a415/embed",
+          previewImageUrl: "https://media.sketchfab.com/example.jpg",
+          title: "Casio F-91W"
+        }
+      ])
+    );
+    formData.set(
+      "devicesJson",
+      JSON.stringify([
+        {
+          name: "Casio",
+          year: 2008,
+          modelAssetId: "draft_1",
+          sortOrder: 0
+        }
+      ])
+    );
+
+    const result = await saveDevicesAction("project-1", {}, formData);
+
+    expect(result).toEqual({
+      error: 'column "preview_image_url" of relation "project_assets" does not exist'
+    });
+  });
 });

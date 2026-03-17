@@ -54,6 +54,14 @@ function getAssetLabel(asset?: ProjectAsset, emptyLabel?: string) {
   return asset.title?.trim() || asset.sourceUrl || asset.storageKey || asset.id;
 }
 
+function getSketchfabThumbnailProxyUrl(url?: string) {
+  if (!url) {
+    return "";
+  }
+
+  return `/api/media/sketchfab-thumbnail?url=${encodeURIComponent(url)}`;
+}
+
 function pickSketchfabThumbnail(images: SketchfabThumbnailImage[] | undefined, preferredWidth: number) {
   if (!images?.length) {
     return "";
@@ -425,7 +433,7 @@ export function DevicesEditor({ projectId, initialDevices, initialAssets }: Devi
                 {getModelAsset(device)?.previewImageUrl ? (
                   <img
                     className="device-preview-image"
-                    src={getModelAsset(device)?.previewImageUrl}
+                    src={getSketchfabThumbnailProxyUrl(getModelAsset(device)?.previewImageUrl)}
                     alt={`${device.name} model preview`}
                   />
                 ) : (
@@ -582,7 +590,11 @@ export function DevicesEditor({ projectId, initialDevices, initialAssets }: Devi
                 <div key={result.id} className="asset-source-result">
                   <div className="asset-source-result-copy">
                     {result.thumbnailUrl ? (
-                      <img className="asset-source-thumb" src={result.thumbnailUrl} alt={`${result.name} thumbnail`} />
+                      <img
+                        className="asset-source-thumb"
+                        src={getSketchfabThumbnailProxyUrl(result.thumbnailUrl)}
+                        alt={`${result.name} thumbnail`}
+                      />
                     ) : null}
                     <div>
                       <strong>{result.name}</strong>

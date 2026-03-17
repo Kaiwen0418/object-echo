@@ -33,6 +33,18 @@ type AssetPayload = {
   attribution?: string;
 };
 
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (error && typeof error === "object" && "message" in error && typeof error.message === "string") {
+    return error.message;
+  }
+
+  return fallback;
+}
+
 function parseDevices(raw: FormDataEntryValue | null): DevicePayload[] {
   if (typeof raw !== "string") {
     throw new Error("Missing device payload.");
@@ -167,7 +179,6 @@ export async function saveDevicesAction(
     await replaceProjectDevices(projectId, resolvedDevices);
     return { success: "Collection saved." };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to save devices.";
-    return { error: message };
+    return { error: getErrorMessage(error, "Failed to save devices.") };
   }
 }
