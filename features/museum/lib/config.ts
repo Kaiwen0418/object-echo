@@ -8,10 +8,10 @@ export const SNAP_CAPTURE_RADIUS = 0.54;
 const MODEL_CONFIGS: Record<string, MuseumSceneModelConfig> = {
   "CASIO F-91W": {
     path: "/demo/models/casio_f-91w/scene.gltf",
-    scale: 2.8,
-    lift: 0.06,
+    scale: 1.8,
+    lift: 0.2,
     yaw: Math.PI * 0.24,
-    pitch: Math.PI * 0.02
+    pitch: Math.PI * 0.3
   },
   "NOKIA 3310": { path: "/demo/models/nokia_3310/scene.gltf", scale: 2.55, lift: 0.04, yaw: Math.PI * 0.14 },
   "SONY WALKMAN": {

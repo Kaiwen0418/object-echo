@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { HomeHero } from "@/components/marketing/HomeHero";
+import { MobileDeviceTabs } from "@/components/museum/MobileDeviceTabs";
 import { MuseumTimeline } from "@/components/museum/MuseumTimeline";
 import { NowPlayingCard } from "@/components/museum/NowPlayingCard";
 import { ScrambleText } from "@/components/ui/ScrambleText";
@@ -26,6 +27,7 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
   const devices = useMemo(() => sortDevices(bundle), [bundle]);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [viewportHeight, setViewportHeight] = useState(0);
+  const [viewportWidth, setViewportWidth] = useState(0);
   const [museumReveal, setMuseumReveal] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [centeredIndex, setCenteredIndex] = useState(HERO_DEVICE_INDEX);
@@ -38,6 +40,7 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
 
   useEffect(() => {
     setViewportHeight(window.innerHeight);
+    setViewportWidth(window.innerWidth);
     const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
     const wantsDark = savedTheme ? savedTheme === "dark" : bundle.publishedPage.theme.darkModeDefault;
 
@@ -60,7 +63,10 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
   }, []);
 
   useEffect(() => {
-    const onResize = () => setViewportHeight(window.innerHeight);
+    const onResize = () => {
+      setViewportHeight(window.innerHeight);
+      setViewportWidth(window.innerWidth);
+    };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
@@ -161,12 +167,19 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
   const museumOpacity = smoothstep(0.16, 0.88, museumReveal);
   const heroOpacity = 1 - smoothstep(0.06, 0.78, museumReveal);
   const heroIsActive = heroOpacity > 0.66;
+  const compactViewportStrength =
+    viewportWidth > 0 ? 1 - smoothstep(560, 1100, viewportWidth) : 0;
+  const responsiveSceneScale = 1 - compactViewportStrength * 0.42;
+  const responsiveSceneOffsetX = compactViewportStrength * 0.96;
+  const responsiveSceneOffsetY = compactViewportStrength * 0.54;
 
   const { deviceRenderStates } = useMuseumScene(canvasRef, bundle, displayedProgress, isDarkMode, {
     heroFocusIndex: HERO_DEVICE_INDEX,
     heroSpinStrength: 0,
     heroSpinCutoff: HERO_DEVICE_INDEX + 0.2,
-    modelScaleMultiplier: modelScale
+    modelScaleMultiplier: modelScale * responsiveSceneScale,
+    sceneOffsetX: responsiveSceneOffsetX,
+    sceneOffsetY: responsiveSceneOffsetY
   });
   const isUsingFallbackModel = Boolean(current?.modelAssetId && current && deviceRenderStates[current.id] === "fallback");
 
@@ -199,6 +212,8 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
             onJump={jumpToDevice}
           />
         </aside>
+
+        <MobileDeviceTabs devices={devices} centeredIndex={centeredIndex} onJump={jumpToDevice} />
 
         <section className="museum-device-stage">
           <div className="museum-device-backword" aria-hidden="true">

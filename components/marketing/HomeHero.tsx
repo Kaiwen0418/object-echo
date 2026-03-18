@@ -26,8 +26,11 @@ export function HomeHero({ opacity, isActive, onEnter }: HomeHeroProps) {
       <div className="home-hero-main">
         <div className="home-hero-copy">
           <div className="home-hero-rec">REC. / [00:00:00]</div>
-          <h1 className="shell-title home-hero-title">
+          <h1 className="shell-title home-hero-title home-hero-title-desktop">
             <ScrambleText active={isActive} text="Build a personal collection that feels lit, staged, and remembered." />
+          </h1>
+          <h1 className="shell-title home-hero-title home-hero-title-mobile">
+            Build a personal device museum.
           </h1>
           <p className="shell-copy home-hero-description">
             Object Echo turns personal devices and media into a cinematic museum timeline. Start with a collection,

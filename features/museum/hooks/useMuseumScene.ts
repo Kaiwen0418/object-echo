@@ -90,6 +90,8 @@ export function useMuseumScene(
     heroSpinStrength?: number;
     heroSpinCutoff?: number;
     modelScaleMultiplier?: number;
+    sceneOffsetX?: number;
+    sceneOffsetY?: number;
   }
 ) {
   const targetProgressRef = useRef(progress);
@@ -155,7 +157,6 @@ export function useMuseumScene(
     const loadingPlaceholders: Array<THREE.Group | null> = [];
     const pendingModelFades: Array<THREE.Group | null> = [];
     const modelFadeProgress: number[] = [];
-    const loader = new GLTFLoader();
     let isDisposed = false;
 
     const markDeviceState = (deviceId: string, state: MuseumDeviceRenderState) => {
@@ -196,7 +197,11 @@ export function useMuseumScene(
       state: Exclude<MuseumDeviceRenderState, "loading">,
       onError?: () => void
     ) => {
-      loader.load(
+      const resourcePath = config.path.slice(0, config.path.lastIndexOf("/") + 1);
+      const modelLoader = new GLTFLoader();
+      modelLoader.setResourcePath(resourcePath);
+
+      modelLoader.load(
         config.path,
         (gltf: { scene: THREE.Group }) => {
           if (isDisposed) return;
@@ -298,6 +303,8 @@ export function useMuseumScene(
 
     const tick = () => {
       const modelScaleMultiplier = options?.modelScaleMultiplier ?? 1;
+      const sceneOffsetX = options?.sceneOffsetX ?? 0;
+      const sceneOffsetY = options?.sceneOffsetY ?? 0;
       const delta = targetProgressRef.current - currentProgress;
       velocity = velocity * 0.8 + delta * 0.022;
       velocity = clamp(velocity, -0.08, 0.08);
@@ -308,7 +315,8 @@ export function useMuseumScene(
         velocity = 0;
       }
 
-      rail.position.y = currentProgress * spacing;
+      rail.position.x = sceneOffsetX;
+      rail.position.y = currentProgress * spacing + sceneOffsetY;
       darkBackdropPlane.visible = darkMode;
       darkBackdropPlane.receiveShadow = darkMode;
       darkBackdropPlane.position.set(-0.8, 0.1, -1.65);
@@ -430,7 +438,9 @@ export function useMuseumScene(
     options?.heroFocusIndex,
     options?.heroSpinCutoff,
     options?.heroSpinStrength,
-    options?.modelScaleMultiplier
+    options?.modelScaleMultiplier,
+    options?.sceneOffsetX,
+    options?.sceneOffsetY
   ]);
 
   useEffect(() => {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AudioEraArtwork } from "@/components/museum/AudioEraArtwork";
+import { EraNowPlayingDesign } from "@/components/museum/nowPlayingCard/EraNowPlayingDesign";
 import type { ProjectAsset, ProjectDevice, ThemeConfig } from "@/types";
 
 type NowPlayingCardProps = {
@@ -50,7 +50,7 @@ export function NowPlayingCard({
     }
     return `${device.name} ${theme.soundtrackSubtitle}`;
   }, [audioAsset?.attribution, audioAsset?.author, device.name, theme.soundtrackSubtitle]);
-  const progressWidth = duration > 0 ? `${(currentTime / duration) * 100}%` : "0%";
+  const progressRatio = duration > 0 ? currentTime / duration : 0;
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -94,29 +94,17 @@ export function NowPlayingCard({
     >
       <div className="small-caption">{variant === "panel" ? "SOUNDTRACK" : "NOW PLAYING"}</div>
       <div className="player-wrap">
-        <AudioEraArtwork device={device} />
-        <div>
-          <div className="player-actions">
-            <div className="track-title">{trackTitle}</div>
-            <button
-              type="button"
-              className="player-toggle"
-              onClick={() => void togglePlayback()}
-              disabled={!audioSrc}
-              aria-label={isPlaying ? "Pause soundtrack" : "Play soundtrack"}
-            >
-              {isPlaying ? "Pause" : audioSrc ? "Play" : "Demo"}
-            </button>
-          </div>
-          <div className="track-sub">{trackSubtitle}</div>
-          <div className="bar">
-            <div className="bar-fill" style={{ width: progressWidth }} />
-          </div>
-          <div className="times">
-            <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration || 238)}</span>
-          </div>
-        </div>
+        <EraNowPlayingDesign
+          year={device.year}
+          title={trackTitle}
+          subtitle={trackSubtitle}
+          isPlaying={isPlaying}
+          hasAudio={Boolean(audioSrc)}
+          currentTimeLabel={formatTime(currentTime)}
+          durationLabel={formatTime(duration || 238)}
+          progressRatio={progressRatio}
+          onToggle={() => void togglePlayback()}
+        />
       </div>
       <audio
         ref={audioRef}

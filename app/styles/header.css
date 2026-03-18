@@ -434,6 +434,8 @@ body.dark .auth-status-trigger:hover {
 @media (max-width: 1100px) {
   .site-header {
     align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 18px;
   }
 
   .marketing-header {
@@ -443,9 +445,10 @@ body.dark .auth-status-trigger:hover {
 
   .site-header-actions {
     width: 100%;
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: flex-start;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: start;
+    gap: 14px;
   }
 
   .site-nav {
@@ -454,11 +457,12 @@ body.dark .auth-status-trigger:hover {
     left: auto;
     width: 100%;
     transform: none;
-    justify-content: space-between;
+    justify-content: flex-start;
+    gap: 10px;
   }
 
   .auth-status-menu {
-    align-self: flex-end;
+    align-self: start;
   }
 
   .site-header-side {
@@ -478,6 +482,10 @@ body.dark .auth-status-trigger:hover {
     padding: 16px 14px;
   }
 
+  .site-header {
+    gap: 12px;
+  }
+
   .site-brand-lockup {
     width: 100%;
     flex-direction: column;
@@ -491,9 +499,84 @@ body.dark .auth-status-trigger:hover {
   .site-nav {
     gap: 12px;
     justify-content: flex-start;
+    grid-column: 1 / -1;
+    order: 3;
   }
 
   .site-header-actions {
-    align-items: flex-start;
+    width: 100%;
+    grid-template-columns: auto auto;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .theme-toggle-label,
+  .site-brand-code {
+    font-size: 11px;
+  }
+
+  .auth-status-name {
+    max-width: 10ch;
+  }
+}
+
+@media (max-width: 560px) {
+  .site-brand {
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  .site-brand-code,
+  .auth-status-name {
+    display: none;
+  }
+
+  .site-header-actions {
+    width: auto;
+    margin-left: auto;
+    grid-template-columns: auto auto;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .theme-toggle {
+    justify-self: auto;
+  }
+
+  .theme-toggle-label {
+    display: none;
+  }
+
+  .marketing-header {
+    padding: 12px 12px 10px;
+  }
+
+  .site-nav {
+    grid-column: 1 / -1;
+    order: 3;
+    gap: 8px;
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .nav-link,
+  .primary-button {
+    padding: 4px 6px;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+  }
+
+  .auth-status-guest {
+    display: none;
+  }
+
+  .auth-status.compact .inline-actions {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+
+  .compact-auth-actions .nav-link {
+    font-size: 10px;
   }
 }

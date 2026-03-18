@@ -191,6 +191,64 @@
   transition: opacity 0.35s ease;
 }
 
+@media (max-width: 768px) {
+  .home-hero {
+    min-height: calc(100vh - 88px);
+  }
+
+  .home-hero-main {
+    align-items: end;
+  }
+
+  .home-hero-copy {
+    padding: 0 16px 28px;
+  }
+
+  .home-hero-title.shell-title {
+    max-width: 10ch;
+    margin-top: 10px;
+    font-size: clamp(24px, 8vw, 40px);
+    line-height: 1.25;
+  }
+
+  .home-hero-description.shell-copy {
+    max-width: none;
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  .home-hero-rec {
+    font-size: 11px;
+  }
+
+  .home-hero-footer {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 14px 16px 18px;
+    text-align: left;
+  }
+
+  .home-hero-footer span:first-child,
+  .home-hero-footer span:last-child {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-hero-copy {
+    padding: 0 12px 20px;
+  }
+
+  .home-hero-title.shell-title {
+    max-width: 8ch;
+    font-size: 22px;
+  }
+
+  .home-hero-description.shell-copy {
+    display: none;
+  }
+}
+
 .home-hero-backdrop {
   position: absolute;
   inset: 0;
@@ -391,6 +449,10 @@
 
 .home-hero-title {
   margin-top: 14px;
+}
+
+.home-hero-title-mobile {
+  display: none;
 }
 
 .home-hero-description {
@@ -837,5 +899,78 @@ body.dark .hero-primary-button:hover {
   .home-hero-copy .shell-copy {
     margin-left: auto;
     margin-right: auto;
+  }
+}
+
+@media (max-width: 560px) {
+  .home-hero {
+    min-height: calc(100vh - 96px);
+    padding: 0;
+  }
+
+  .home-hero-main {
+    align-items: flex-end;
+    justify-content: flex-start;
+    padding: 0 0 24px;
+  }
+
+  .home-hero-copy {
+    width: min(58vw, 232px);
+    max-width: 232px;
+    margin: 0 0 0 16px;
+    padding: 0;
+    border-left: 0;
+    text-align: left;
+  }
+
+  .home-hero-copy .shell-title,
+  .home-hero-copy .shell-copy {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .home-hero-copy .shell-title {
+    max-width: 7ch;
+    font-size: clamp(18px, 6.4vw, 26px);
+    line-height: 1.16;
+    letter-spacing: 0.03em;
+    text-wrap: pretty;
+  }
+
+  .home-hero-title-desktop {
+    display: none;
+  }
+
+  .home-hero-title-mobile {
+    display: block;
+    max-width: 7ch;
+  }
+
+  .home-hero-title {
+    margin-top: 8px;
+  }
+
+  .home-hero-rec {
+    margin-top: 0;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+  }
+
+  .home-hero-description {
+    display: none;
+  }
+
+  .home-hero-actions {
+    margin-top: 16px;
+  }
+
+  .hero-primary-button {
+    min-height: 40px;
+    padding: 0 14px;
+    font-size: 10px;
+  }
+
+  .home-hero-footer {
+    padding: 8px 12px 12px;
   }
 }

@@ -10,6 +10,13 @@ function readIsDark() {
 
 export function HomeHeroScene() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const compactLayoutRef = useRef({
+    cameraBaseY: 5,
+    cameraBaseZ: 40,
+    artifactBaseX: 12,
+    artifactBaseY: 5,
+    artifactScale: 1
+  });
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -192,6 +199,25 @@ export function HomeHeroScene() {
       const heroWidth = canvas.clientWidth || window.innerWidth;
       const heroHeight = canvas.clientHeight || window.innerHeight;
       camera.aspect = heroWidth / heroHeight;
+      const isCompact = heroWidth <= 560;
+      compactLayoutRef.current = isCompact
+        ? {
+            cameraBaseY: 4.2,
+            cameraBaseZ: 48,
+            artifactBaseX: 4.9,
+            artifactBaseY: 3.2,
+            artifactScale: 0.72
+          }
+        : {
+            cameraBaseY: 5,
+            cameraBaseZ: 40,
+            artifactBaseX: 12,
+            artifactBaseY: 5,
+            artifactScale: 1
+          };
+      camera.position.set(0, compactLayoutRef.current.cameraBaseY, compactLayoutRef.current.cameraBaseZ);
+      artifactGroup.position.set(compactLayoutRef.current.artifactBaseX, compactLayoutRef.current.artifactBaseY, 0);
+      artifactGroup.scale.setScalar(compactLayoutRef.current.artifactScale);
       camera.updateProjectionMatrix();
       renderer.setSize(heroWidth, heroHeight, false);
     };
@@ -205,12 +231,21 @@ export function HomeHeroScene() {
 
     const tick = () => {
       const elapsedTime = clock.getElapsedTime();
+      const {
+        cameraBaseY,
+        artifactBaseX,
+        artifactBaseY,
+        artifactScale
+      } = compactLayoutRef.current;
 
       planet.rotation.y = elapsedTime * (isDark ? 0.02 : 0.01);
       stars.rotation.y = elapsedTime * (isDark ? 0.005 : 0.002);
       stars.rotation.z = elapsedTime * (isDark ? 0.002 : 0);
-      artifactGroup.position.y = 5 + Math.sin(elapsedTime * (isDark ? 0.5 : 0.4)) * (isDark ? 1.5 : 0.8);
+      artifactGroup.position.x = artifactBaseX;
+      artifactGroup.position.y =
+        artifactBaseY + Math.sin(elapsedTime * (isDark ? 0.5 : 0.4)) * (isDark ? 1.5 : 0.8) * artifactScale;
       artifactGroup.rotation.y = -Math.PI / 6 + Math.sin(elapsedTime * 0.2) * (isDark ? 0.1 : 0.03);
+      artifactGroup.scale.setScalar(artifactScale);
 
       streaks.forEach((item) => {
         item.mesh.position.y -= item.speed;
@@ -222,7 +257,7 @@ export function HomeHeroScene() {
       });
 
       camera.position.x += (mouse.x - camera.position.x) * 0.02;
-      camera.position.y += (-mouse.y - camera.position.y + 5) * 0.02;
+      camera.position.y += (-mouse.y - camera.position.y + cameraBaseY) * 0.02;
       camera.lookAt(scene.position);
 
       renderer.render(scene, camera);

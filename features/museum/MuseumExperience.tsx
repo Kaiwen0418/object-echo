@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MuseumTimeline } from "@/components/museum/MuseumTimeline";
+import { MobileDeviceTabs } from "@/components/museum/MobileDeviceTabs";
 import { NowPlayingCard } from "@/components/museum/NowPlayingCard";
 import { SketchfabViewer } from "@/components/museum/SketchfabViewer";
 import { buildSketchfabThumbnailProxyUrl, getMuseumViewerModel, sortDevices } from "@/features/museum/lib/config";
@@ -143,6 +144,8 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
           />
         </aside>
 
+        <MobileDeviceTabs devices={devices} centeredIndex={centeredIndex} onJump={jumpToDevice} />
+
         <section className="museum-device-stage">
           {viewerBackdrop ? (
             <div className="museum-viewer-stage-poster" aria-hidden="true">
@@ -188,54 +191,60 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
             <p className="museum-spec-description">{current.era}</p>
           </section>
 
-          <section className="museum-spec-card">
-            <div className="museum-spec-header">
-              <div>
-                <div className="museum-spec-label">Specifications</div>
-                <div className="museum-spec-value">Archive Notes</div>
+          <details className="museum-disclosure museum-disclosure-specs" open>
+            <summary className="museum-disclosure-summary">
+              <span className="museum-spec-label">Specifications</span>
+              <span className="museum-disclosure-title">Archive Notes</span>
+            </summary>
+            <section className="museum-spec-card museum-disclosure-card">
+              <div className="museum-spec-list">
+                {current.specs.map((spec) => (
+                  <div key={`${current.id}-${spec.label}`} className="museum-spec-row">
+                    <span className="museum-spec-item-label">{spec.label}</span>
+                    <span className="museum-spec-item-value">{spec.value}</span>
+                  </div>
+                ))}
               </div>
-            </div>
-            <div className="museum-spec-list">
-              {current.specs.map((spec) => (
-                <div key={`${current.id}-${spec.label}`} className="museum-spec-row">
-                  <span className="museum-spec-item-label">{spec.label}</span>
-                  <span className="museum-spec-item-value">{spec.value}</span>
-                </div>
-              ))}
-            </div>
-          </section>
+            </section>
+          </details>
 
           {viewerModel ? (
-            <section className="museum-spec-card museum-spec-card-highlight museum-viewer-meta">
-              <div className="museum-spec-header">
-                <div>
-                  <div className="museum-spec-label">Model Source</div>
-                  <div className="museum-spec-value">{viewerModel.title}</div>
+            <details className="museum-disclosure museum-disclosure-model" open>
+              <summary className="museum-disclosure-summary museum-disclosure-summary-highlight">
+                <span className="museum-spec-label">Model Source</span>
+                <span className="museum-disclosure-title">{viewerModel.title}</span>
+              </summary>
+              <section className="museum-spec-card museum-spec-card-highlight museum-viewer-meta museum-disclosure-card">
+                <div className="museum-spec-header">
+                  <div>
+                    <div className="museum-spec-label">Model Source</div>
+                    <div className="museum-spec-value">{viewerModel.title}</div>
+                  </div>
+                  <a
+                    className="museum-spec-badge museum-spec-badge-highlight"
+                    href={viewerModel.viewerUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Sketchfab
+                  </a>
                 </div>
-                <a
-                  className="museum-spec-badge museum-spec-badge-highlight"
-                  href={viewerModel.viewerUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Sketchfab
-                </a>
-              </div>
-              <div className="museum-spec-list">
-                <div className="museum-spec-row">
-                  <span className="museum-spec-item-label">Author</span>
-                  <span className="museum-spec-item-value">{viewerModel.author ?? "Unknown"}</span>
+                <div className="museum-spec-list">
+                  <div className="museum-spec-row">
+                    <span className="museum-spec-item-label">Author</span>
+                    <span className="museum-spec-item-value">{viewerModel.author ?? "Unknown"}</span>
+                  </div>
+                  <div className="museum-spec-row">
+                    <span className="museum-spec-item-label">License</span>
+                    <span className="museum-spec-item-value">{viewerModel.license ?? "Pending"}</span>
+                  </div>
                 </div>
-                <div className="museum-spec-row">
-                  <span className="museum-spec-item-label">License</span>
-                  <span className="museum-spec-item-value">{viewerModel.license ?? "Pending"}</span>
-                </div>
-              </div>
-              {viewerModel.attribution ? <p className="museum-spec-note">{viewerModel.attribution}</p> : null}
-              {viewerModel.isFallback ? (
-                <p className="museum-spec-note">The attached model is not viewer-compatible. Showing the default viewer model instead.</p>
-              ) : null}
-            </section>
+                {viewerModel.attribution ? <p className="museum-spec-note">{viewerModel.attribution}</p> : null}
+                {viewerModel.isFallback ? (
+                  <p className="museum-spec-note">The attached model is not viewer-compatible. Showing the default viewer model instead.</p>
+                ) : null}
+              </section>
+            </details>
           ) : null}
 
           <NowPlayingCard
