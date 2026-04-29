@@ -10,8 +10,9 @@ const MODEL_CONFIGS: Record<string, MuseumSceneModelConfig> = {
     path: "/demo/models/casio_f-91w/scene.gltf",
     scale: 1.8,
     lift: 0.2,
-    yaw: Math.PI * 0.24,
-    pitch: Math.PI * 0.3
+    offsetX: -0.36,
+    yaw: Math.PI * 0.08,
+    pitch: Math.PI * 0.48
   },
   "NOKIA 3310": { path: "/demo/models/nokia_3310/scene.gltf", scale: 2.55, lift: 0.04, yaw: Math.PI * 0.14 },
   "SONY WALKMAN": {

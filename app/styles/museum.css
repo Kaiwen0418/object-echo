@@ -583,8 +583,11 @@
 
 .npc-era-lcd-time {
   font-family: "JetBrains Mono", monospace;
-  font-size: 24px;
-  letter-spacing: 0.1em;
+  font-size: clamp(16px, 5vw, 24px);
+  line-height: 1;
+  letter-spacing: clamp(0.02em, 0.35vw, 0.1em);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
   text-shadow: 0 0 8px rgba(57, 255, 20, 0.4);
 }
 
@@ -1610,6 +1613,7 @@ body.dark .museum-device-summary {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto auto;
     min-height: auto;
+    inset: 96px 0 0;
   }
 
   .museum-device-timeline {
@@ -1618,11 +1622,16 @@ body.dark .museum-device-summary {
 
   .museum-mobile-tabs {
     display: flex;
+    position: sticky;
+    top: 0;
+    z-index: 14;
     gap: 10px;
     overflow-x: auto;
     padding: 10px 10px 0;
     border-top: 1px solid color-mix(in oklab, var(--muted) 20%, transparent);
     border-bottom: 1px solid color-mix(in oklab, var(--muted) 16%, transparent);
+    background: color-mix(in oklab, var(--bg) 94%, black 6%);
+    backdrop-filter: blur(10px);
     scrollbar-width: none;
   }
 
@@ -1752,14 +1761,22 @@ body.dark .museum-device-summary {
 }
 
 @media (max-width: 560px) {
+  .museum-device-shell {
+    inset: 88px 0 0;
+  }
+
   .museum-device-panel {
     grid-template-columns: minmax(146px, 0.88fr) minmax(0, 1.12fr);
     gap: 10px;
-    padding: 10px 8px 6px;
+    padding: 10px 8px 2px;
   }
 
   .museum-device-panel > .player-panel {
     min-width: 0;
+  }
+
+  .home-showcase .museum-device-panel > :not(.player-panel):last-of-type {
+    min-height: 194px;
   }
 
   .museum-device-panel .museum-spec-card,

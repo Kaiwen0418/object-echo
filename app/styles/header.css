@@ -521,6 +521,21 @@ body.dark .auth-status-trigger:hover {
 }
 
 @media (max-width: 560px) {
+  .site-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .site-brand-lockup {
+    grid-column: 1;
+    width: auto;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+
   .site-brand {
     font-size: 11px;
     line-height: 1.4;
@@ -532,15 +547,19 @@ body.dark .auth-status-trigger:hover {
   }
 
   .site-header-actions {
-    width: auto;
-    margin-left: auto;
-    grid-template-columns: auto auto;
-    align-items: center;
-    gap: 10px;
+    display: contents;
   }
 
-  .theme-toggle {
-    justify-self: auto;
+  .site-header-actions > .theme-toggle {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .site-header-actions > .auth-status {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
   }
 
   .theme-toggle-label {
@@ -548,20 +567,24 @@ body.dark .auth-status-trigger:hover {
   }
 
   .marketing-header {
-    padding: 12px 12px 10px;
+    padding: 10px 12px 8px;
   }
 
   .site-nav {
     grid-column: 1 / -1;
-    order: 3;
-    gap: 8px;
-    justify-content: flex-start;
+    grid-row: 2;
+    display: grid;
+    grid-auto-flow: column;
+    justify-self: stretch;
+    gap: 4px;
+    justify-content: center;
     width: 100%;
+    margin-top: 2px;
   }
 
   .nav-link,
   .primary-button {
-    padding: 4px 6px;
+    padding: 3px 5px;
     font-size: 10px;
     letter-spacing: 0.12em;
   }
@@ -578,5 +601,6 @@ body.dark .auth-status-trigger:hover {
 
   .compact-auth-actions .nav-link {
     font-size: 10px;
+    padding-right: 0;
   }
 }
