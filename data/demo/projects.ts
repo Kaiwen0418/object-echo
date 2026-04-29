@@ -43,7 +43,7 @@ export const demoDevices: ProjectDevice[] = [
   {
     id: "device_001",
     projectId: demoProject.id,
-    year: 2008,
+    year: 1981,
     name: "CASIO F-91W",
     era: "Digital Watches",
     specs: [
@@ -57,7 +57,7 @@ export const demoDevices: ProjectDevice[] = [
   {
     id: "device_002",
     projectId: demoProject.id,
-    year: 2009,
+    year: 1986,
     name: "SONY WALKMAN",
     era: "Portable Audio",
     specs: [
@@ -72,7 +72,7 @@ export const demoDevices: ProjectDevice[] = [
   {
     id: "device_003",
     projectId: demoProject.id,
-    year: 2010,
+    year: 1999,
     name: "NOKIA 3310",
     era: "Early Mobile",
     specs: [
@@ -86,7 +86,7 @@ export const demoDevices: ProjectDevice[] = [
   {
     id: "device_004",
     projectId: demoProject.id,
-    year: 2012,
+    year: 2006,
     name: "IPOD NANO",
     era: "Portable Music",
     specs: [
@@ -100,7 +100,7 @@ export const demoDevices: ProjectDevice[] = [
   {
     id: "device_005",
     projectId: demoProject.id,
-    year: 2014,
+    year: 2013,
     name: "SAMSUNG GALAXY MINI II",
     era: "Android Phones",
     specs: [
@@ -114,7 +114,7 @@ export const demoDevices: ProjectDevice[] = [
   {
     id: "device_006",
     projectId: demoProject.id,
-    year: 2016,
+    year: 2018,
     name: "WACOM TABLET",
     era: "Creative Tools",
     specs: [
@@ -128,7 +128,7 @@ export const demoDevices: ProjectDevice[] = [
   {
     id: "device_007",
     projectId: demoProject.id,
-    year: 2025,
+    year: 2020,
     name: "MACBOOK M4",
     era: "Personal Computing",
     specs: [

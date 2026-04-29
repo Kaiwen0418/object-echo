@@ -21,6 +21,8 @@ Useful commands:
 ```bash
 pnpm lint
 pnpm typecheck
+pnpm test:unit
+pnpm test:integration
 pnpm build
 pnpm start
 ```
@@ -46,15 +48,38 @@ The default local URL is `http://localhost:3000`.
 - `lib/storage/`: storage placeholders and future Supabase Storage helpers
 - `.github/workflows/`: CI and Supabase promotion workflows
 - `docs/`: deployment, branch rules, and environment setup notes
+- `tests/`: unit tests for API routes and dashboard server actions
 
 Current mock upload route:
 
 - `/api/upload/storage-sign`
 
+## Testing
+
+The repo now includes a `vitest`-based unit test suite for:
+
+- API route handlers in `app/api/`
+- dashboard server actions in `app/dashboard/**/actions.ts`
+
+Run the full unit suite with:
+
+```bash
+pnpm test:unit
+```
+
+Run the remote-backed integration suite with:
+
+```bash
+pnpm test:integration
+```
+
+Testing conventions and extension guidance live in [docs/testing.md](./docs/testing.md).
+
 ## Deployment Docs
 
 - [Deployment and branch rules](./docs/deployment-and-branches.md)
 - [Environment and secrets checklist](./docs/environment-and-secrets.md)
+- [Testing guide](./docs/testing.md)
 
 ## Branch Model
 

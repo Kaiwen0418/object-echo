@@ -1,6 +1,5 @@
-import { demoBundle } from "@/data/demo/projects";
-import { HomeMuseumShowcase } from "@/features/museum/HomeMuseumShowcase";
+import { MuseumDemo } from "@/features/museum/MuseumDemo";
 
 export function MarketingHome() {
-  return <HomeMuseumShowcase bundle={demoBundle} />;
+  return <MuseumDemo />;
 }

@@ -1,51 +1,38 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { MuseumHero } from "@/components/museum/MuseumHero";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MuseumTimeline } from "@/components/museum/MuseumTimeline";
+import { MobileDeviceTabs } from "@/components/museum/MobileDeviceTabs";
 import { NowPlayingCard } from "@/components/museum/NowPlayingCard";
-import { ScrambleText } from "@/components/ui/ScrambleText";
-import {
-  PREVIEW_RANGE,
-  SNAP_CAPTURE_RADIUS,
-  SNAP_THRESHOLD,
-  getMuseumSceneModelConfig,
-  sortDevices
-} from "@/features/museum/lib/config";
-import { useMuseumScene, type ProgressCanvas } from "@/features/museum/hooks/useMuseumScene";
-import { clamp, smoothstep } from "@/features/museum/lib/math";
+import { SketchfabViewer } from "@/components/museum/SketchfabViewer";
+import { buildSketchfabThumbnailProxyUrl, getMuseumViewerModel, sortDevices } from "@/features/museum/lib/config";
+import { clamp } from "@/features/museum/lib/math";
 import type { MuseumProjectBundle } from "@/types";
 
 type MuseumExperienceProps = {
   bundle: MuseumProjectBundle;
 };
 
+type ViewerModel = NonNullable<ReturnType<typeof getMuseumViewerModel>>;
+
 export function MuseumExperience({ bundle }: MuseumExperienceProps) {
   const devices = useMemo(() => sortDevices(bundle), [bundle]);
   const [darkMode, setDarkMode] = useState(bundle.publishedPage.theme.darkModeDefault);
-  const [viewportHeight, setViewportHeight] = useState(0);
-  const [museumReveal, setMuseumReveal] = useState(0);
-  const [scrollProgress, setScrollProgress] = useState(0);
   const [centeredIndex, setCenteredIndex] = useState(0);
-  const [isScrollInteracting, setIsScrollInteracting] = useState(false);
   const [displayedProgress, setDisplayedProgress] = useState(0);
-  const [cardAnimKey, setCardAnimKey] = useState(0);
-  const [modelScale, setModelScale] = useState(1);
-  const [cardScale, setCardScale] = useState(1);
-  const canvasRef = useRef<ProgressCanvas | null>(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [isScrollInteracting, setIsScrollInteracting] = useState(false);
+  const [cachedViewerModels, setCachedViewerModels] = useState<ViewerModel[]>([]);
   const scrollIdleTimeoutRef = useRef<number | null>(null);
+  const viewerModelsByIndex = useMemo(
+    () => devices.map((device) => getMuseumViewerModel(device, bundle.assets)),
+    [bundle.assets, devices]
+  );
 
   useEffect(() => {
-    setViewportHeight(window.innerHeight);
     document.body.classList.toggle("dark", darkMode);
     return () => document.body.classList.remove("dark");
   }, [darkMode]);
-
-  useEffect(() => {
-    const onResize = () => setViewportHeight(window.innerHeight);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
 
   useEffect(() => {
     let ticking = false;
@@ -64,14 +51,10 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
       ticking = true;
 
       window.requestAnimationFrame(() => {
-        const heroHeight = viewportHeight || window.innerHeight;
-        const reveal = clamp(window.scrollY / (heroHeight * 0.92), 0, 1);
-        const museumScroll = Math.max(window.scrollY - heroHeight, 0);
-        const museumMax = Math.max(document.documentElement.scrollHeight - window.innerHeight - heroHeight, 1);
-        const ratio = museumMax > 0 ? museumScroll / museumMax : 0;
-
-        setMuseumReveal(reveal);
-        setScrollProgress(clamp(ratio, 0, 1) * Math.max(devices.length - 1, 0));
+        const sections = Math.max(devices.length - 1, 1);
+        const viewportHeight = window.innerHeight || 1;
+        const ratio = clamp(window.scrollY / Math.max(viewportHeight * sections, 1), 0, 1);
+        setScrollProgress(ratio * Math.max(devices.length - 1, 0));
         ticking = false;
       });
     };
@@ -85,109 +68,73 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
         window.clearTimeout(scrollIdleTimeoutRef.current);
       }
     };
-  }, [devices.length, viewportHeight]);
-
-  const nearestIndex = clamp(Math.round(scrollProgress), 0, Math.max(devices.length - 1, 0));
-  const isInSnapZone = Math.abs(scrollProgress - nearestIndex) <= SNAP_CAPTURE_RADIUS;
+  }, [devices.length]);
 
   useEffect(() => {
-    if (isInSnapZone) setCenteredIndex(nearestIndex);
-  }, [isInSnapZone, nearestIndex]);
-
-  const current = devices[centeredIndex] ?? devices[0];
-  const currentModelConfig = current ? getMuseumSceneModelConfig(current, bundle.assets) : undefined;
-  const isSvgDevice = currentModelConfig?.kind === "svg";
-
-  useEffect(() => {
-    setCardAnimKey((value) => value + 1);
-  }, [centeredIndex]);
-
-  const phase = scrollProgress - centeredIndex;
-  const previewPhase = clamp((phase / SNAP_THRESHOLD) * PREVIEW_RANGE, -PREVIEW_RANGE, PREVIEW_RANGE);
-  const targetVisualProgress = isScrollInteracting
-    ? centeredIndex + previewPhase
-    : isInSnapZone
-      ? centeredIndex
-      : scrollProgress;
+    setCenteredIndex(clamp(Math.round(scrollProgress), 0, Math.max(devices.length - 1, 0)));
+  }, [devices.length, scrollProgress]);
 
   useEffect(() => {
     let raf = 0;
 
     const tick = () => {
       setDisplayedProgress((currentValue) => {
-        const nextValue = currentValue + (targetVisualProgress - currentValue) * 0.16;
-        return Math.abs(targetVisualProgress - nextValue) < 0.0015 ? targetVisualProgress : nextValue;
+        const targetValue = isScrollInteracting ? scrollProgress : centeredIndex;
+        const nextValue = currentValue + (targetValue - currentValue) * 0.16;
+        return Math.abs(targetValue - nextValue) < 0.0015 ? targetValue : nextValue;
       });
       raf = window.requestAnimationFrame(tick);
     };
 
     tick();
     return () => window.cancelAnimationFrame(raf);
-  }, [targetVisualProgress]);
+  }, [centeredIndex, isScrollInteracting, scrollProgress]);
 
+  useEffect(() => {
+    const candidates = [centeredIndex - 1, centeredIndex, centeredIndex + 1]
+      .map((index) => viewerModelsByIndex[index])
+      .filter((model): model is ViewerModel => Boolean(model));
+
+    if (!candidates.length) {
+      return;
+    }
+
+    setCachedViewerModels((currentModels) => {
+      const nextModels = [...currentModels];
+
+      for (const candidate of candidates) {
+        const existingIndex = nextModels.findIndex((model) => model.uid === candidate.uid);
+        if (existingIndex >= 0) {
+          nextModels.splice(existingIndex, 1);
+        }
+        nextModels.push(candidate);
+      }
+
+      return nextModels.slice(-4);
+    });
+  }, [centeredIndex, viewerModelsByIndex]);
+
+  const current = devices[centeredIndex] ?? devices[0];
+  const currentAudioAsset = current?.musicAssetId
+    ? bundle.assets.find((asset) => asset.id === current.musicAssetId && asset.type === "audio")
+    : undefined;
+  const viewerModel = viewerModelsByIndex[centeredIndex];
+  const viewerBackdrop = buildSketchfabThumbnailProxyUrl(viewerModel?.previewImageUrl);
   const displayPhase = displayedProgress - centeredIndex;
-  const leftMotionY = -displayPhase * 36;
-  const leftMotionGlow = 1 - Math.min(Math.abs(displayPhase) / PREVIEW_RANGE, 1) * 0.55;
   const playerMotionY = -displayPhase * 36;
-  const playerMotionGlow = 1 - Math.min(Math.abs(displayPhase) / PREVIEW_RANGE, 1) * 0.55;
-  const museumOpacity = smoothstep(0.18, 0.88, museumReveal);
-  const heroOpacity = 1 - smoothstep(0.08, 0.72, museumReveal);
-
-  const { deviceRenderStates } = useMuseumScene(canvasRef, bundle, displayedProgress, darkMode, {
-    modelScaleMultiplier: modelScale,
-    svgCardScaleMultiplier: cardScale,
-    renderSvgBackdrop: false
-  });
-  const isUsingFallbackModel = Boolean(current?.modelAssetId && current && deviceRenderStates[current.id] === "fallback");
+  const playerMotionGlow = 1 - Math.min(Math.abs(displayPhase) / 0.86, 1) * 0.55;
 
   const jumpToDevice = (index: number) => {
     document.getElementById(`scene-${index}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
-  const enterMuseum = () => {
-    window.scrollTo({ top: viewportHeight || window.innerHeight, behavior: "smooth" });
-  };
-
   if (!current) return null;
 
   return (
-    <div className="page">
-      {isSvgDevice ? (
-        <div
-          className="museum-svg-dom-card-layer"
-          style={
-            {
-              "--museum-svg-card-scale": String(cardScale),
-              "--museum-svg-card-opacity": String(museumOpacity)
-            } as CSSProperties
-          }
-          aria-hidden="true"
-        >
-          <div className="museum-svg-dom-card" />
-        </div>
-      ) : null}
-      <canvas ref={canvasRef} className="bg-canvas" style={{ opacity: museumOpacity }} />
-      <div className="museum-device-accent-layer" style={{ opacity: museumOpacity }} aria-hidden="true" />
+    <div className="page museum-viewer-page">
+      <div className="museum-viewer-backdrop" aria-hidden="true" />
 
-      <MuseumHero
-        opacity={heroOpacity}
-        title={bundle.publishedPage.title.toUpperCase()}
-        description={bundle.publishedPage.description}
-        onEnter={enterMuseum}
-      />
-
-      <button
-        className="mode-btn overlay"
-        style={{ opacity: museumOpacity, pointerEvents: museumOpacity > 0.4 ? "auto" : "none" }}
-        onClick={() => setDarkMode((value) => !value)}
-      >
-        {darkMode ? "LIGHT" : "DARK"}
-      </button>
-
-      <main
-        className={`museum-device-shell overlay${isSvgDevice ? " museum-device-shell-svg" : ""}`}
-        style={{ opacity: museumOpacity, pointerEvents: museumOpacity > 0.4 ? "auto" : "none" }}
-      >
+      <main className="museum-device-shell overlay">
         <aside className="museum-device-timeline">
           <MuseumTimeline
             devices={devices}
@@ -197,19 +144,39 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
           />
         </aside>
 
-        <section className={`museum-device-stage${isSvgDevice ? " museum-device-stage-svg" : ""}`}>
+        <MobileDeviceTabs devices={devices} centeredIndex={centeredIndex} onJump={jumpToDevice} />
+
+        <section className="museum-device-stage">
+          {viewerBackdrop ? (
+            <div className="museum-viewer-stage-poster" aria-hidden="true">
+              <img src={viewerBackdrop} alt="" />
+            </div>
+          ) : null}
           <div className="museum-device-backword" aria-hidden="true">
             {current.name}
           </div>
-          <div
-            className={`museum-device-copy${isSvgDevice ? " museum-device-copy-svg" : ""}`}
-            style={isSvgDevice ? { opacity: leftMotionGlow } : { transform: `translateY(${leftMotionY}px)`, opacity: leftMotionGlow }}
-          >
-            <h1 key={`title-${cardAnimKey}`} className="museum-device-title fade-card">
-              <ScrambleText active={museumOpacity > 0.4} replayToken={cardAnimKey} text="CASIO" settleDurationMs={720} />
-            </h1>
-            <p className="museum-device-summary fade-card">PERSONAL DEVICE MUSEUM</p>
-          </div>
+
+          {viewerModel ? (
+            <div className="museum-viewer-stack">
+              {cachedViewerModels.map((cachedViewerModel) => (
+                <SketchfabViewer
+                  key={cachedViewerModel.uid}
+                  uid={cachedViewerModel.uid}
+                  title={cachedViewerModel.title}
+                  subtitle={`${current.year} · ${current.era || "Archive"}`}
+                  previewImageUrl={cachedViewerModel.previewImageUrl}
+                  className="museum-viewer-card"
+                  active={cachedViewerModel.uid === viewerModel.uid}
+                />
+              ))}
+            </div>
+          ) : (
+            <section className="museum-viewer-empty panel">
+              <h2>No interactive model attached</h2>
+              <p>Attach a Sketchfab embed URL to this device to render it in the museum viewer.</p>
+            </section>
+          )}
+
         </section>
 
         <aside className="museum-device-panel">
@@ -224,68 +191,76 @@ export function MuseumExperience({ bundle }: MuseumExperienceProps) {
             <p className="museum-spec-description">{current.era}</p>
           </section>
 
-          <section className="museum-spec-card">
-            <div className="museum-spec-header">
-              <div>
-                <div className="museum-spec-label">Scene Controls</div>
-                <div className="museum-spec-value">Scale Tuning</div>
-              </div>
-            </div>
-            <div className="museum-control-list">
-              <label className="museum-control">
-                <div className="museum-control-row">
-                  <span className="museum-spec-item-label">Model Size</span>
-                  <span className="museum-spec-item-value">{modelScale.toFixed(2)}x</span>
-                </div>
-                <input
-                  className="museum-control-slider"
-                  type="range"
-                  min="0.7"
-                  max="1.45"
-                  step="0.01"
-                  value={modelScale}
-                  onChange={(event) => setModelScale(Number(event.target.value))}
-                />
-              </label>
-              {isSvgDevice ? (
-                <label className="museum-control">
-                  <div className="museum-control-row">
-                    <span className="museum-spec-item-label">Card Size</span>
-                    <span className="museum-spec-item-value">{cardScale.toFixed(2)}x</span>
+          <details className="museum-disclosure museum-disclosure-specs" open>
+            <summary className="museum-disclosure-summary">
+              <span className="museum-spec-label">Specifications</span>
+              <span className="museum-disclosure-title">Archive Notes</span>
+            </summary>
+            <section className="museum-spec-card museum-disclosure-card">
+              <div className="museum-spec-list">
+                {current.specs.map((spec) => (
+                  <div key={`${current.id}-${spec.label}`} className="museum-spec-row">
+                    <span className="museum-spec-item-label">{spec.label}</span>
+                    <span className="museum-spec-item-value">{spec.value}</span>
                   </div>
-                  <input
-                    className="museum-control-slider"
-                    type="range"
-                    min="0.7"
-                    max="1.55"
-                    step="0.01"
-                    value={cardScale}
-                    onChange={(event) => setCardScale(Number(event.target.value))}
-                  />
-                </label>
-              ) : null}
-            </div>
-            {isUsingFallbackModel ? (
-              <p className="museum-spec-note">
-                Uploaded model could not be loaded. Showing the default device model instead.
-              </p>
-            ) : null}
-          </section>
+                ))}
+              </div>
+            </section>
+          </details>
+
+          {viewerModel ? (
+            <details className="museum-disclosure museum-disclosure-model" open>
+              <summary className="museum-disclosure-summary museum-disclosure-summary-highlight">
+                <span className="museum-spec-label">Model Source</span>
+                <span className="museum-disclosure-title">{viewerModel.title}</span>
+              </summary>
+              <section className="museum-spec-card museum-spec-card-highlight museum-viewer-meta museum-disclosure-card">
+                <div className="museum-spec-header">
+                  <div>
+                    <div className="museum-spec-label">Model Source</div>
+                    <div className="museum-spec-value">{viewerModel.title}</div>
+                  </div>
+                  <a
+                    className="museum-spec-badge museum-spec-badge-highlight"
+                    href={viewerModel.viewerUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Sketchfab
+                  </a>
+                </div>
+                <div className="museum-spec-list">
+                  <div className="museum-spec-row">
+                    <span className="museum-spec-item-label">Author</span>
+                    <span className="museum-spec-item-value">{viewerModel.author ?? "Unknown"}</span>
+                  </div>
+                  <div className="museum-spec-row">
+                    <span className="museum-spec-item-label">License</span>
+                    <span className="museum-spec-item-value">{viewerModel.license ?? "Pending"}</span>
+                  </div>
+                </div>
+                {viewerModel.attribution ? <p className="museum-spec-note">{viewerModel.attribution}</p> : null}
+                {viewerModel.isFallback ? (
+                  <p className="museum-spec-note">The attached model is not viewer-compatible. Showing the default viewer model instead.</p>
+                ) : null}
+              </section>
+            </details>
+          ) : null}
 
           <NowPlayingCard
             device={current}
             theme={bundle.publishedPage.theme}
-            museumOpacity={museumOpacity}
+            audioAsset={currentAudioAsset}
+            museumOpacity={1}
             motionY={playerMotionY}
             glow={playerMotionGlow}
-            cardKey={cardAnimKey}
+            cardKey={centeredIndex}
             variant="panel"
           />
         </aside>
       </main>
 
       <section className="scroll-track">
-        <section className="hero-spacer" aria-hidden="true" />
         {devices.map((device, index) => (
           <section key={device.id} id={`scene-${index}`} className="scroll-section" aria-hidden="true" />
         ))}

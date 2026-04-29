@@ -13,7 +13,7 @@ export default async function ProjectWorkspaceLayout({
 
   return (
     <main className="site-shell">
-      <AppHeader brandHref={overviewHref} links={GLOBAL_HEADER_LINKS} />
+      <AppHeader brandHref={overviewHref} variant="marketing" links={GLOBAL_HEADER_LINKS} />
       {children}
     </main>
   );

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { HomeHero } from "@/components/marketing/HomeHero";
+import { MobileDeviceTabs } from "@/components/museum/MobileDeviceTabs";
 import { MuseumTimeline } from "@/components/museum/MuseumTimeline";
 import { NowPlayingCard } from "@/components/museum/NowPlayingCard";
 import { ScrambleText } from "@/components/ui/ScrambleText";
@@ -9,7 +10,6 @@ import {
   PREVIEW_RANGE,
   SNAP_CAPTURE_RADIUS,
   SNAP_THRESHOLD,
-  getMuseumSceneModelConfig,
   sortDevices
 } from "@/features/museum/lib/config";
 import { useMuseumScene, type ProgressCanvas } from "@/features/museum/hooks/useMuseumScene";
@@ -27,6 +27,7 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
   const devices = useMemo(() => sortDevices(bundle), [bundle]);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [viewportHeight, setViewportHeight] = useState(0);
+  const [viewportWidth, setViewportWidth] = useState(0);
   const [museumReveal, setMuseumReveal] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [centeredIndex, setCenteredIndex] = useState(HERO_DEVICE_INDEX);
@@ -34,12 +35,12 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
   const [displayedProgress, setDisplayedProgress] = useState(HERO_DEVICE_INDEX);
   const [cardAnimKey, setCardAnimKey] = useState(0);
   const [modelScale, setModelScale] = useState(1);
-  const [cardScale, setCardScale] = useState(1);
   const canvasRef = useRef<ProgressCanvas | null>(null);
   const scrollIdleTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     setViewportHeight(window.innerHeight);
+    setViewportWidth(window.innerWidth);
     const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
     const wantsDark = savedTheme ? savedTheme === "dark" : bundle.publishedPage.theme.darkModeDefault;
 
@@ -62,7 +63,10 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
   }, []);
 
   useEffect(() => {
-    const onResize = () => setViewportHeight(window.innerHeight);
+    const onResize = () => {
+      setViewportHeight(window.innerHeight);
+      setViewportWidth(window.innerWidth);
+    };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
@@ -120,8 +124,9 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
   }, [isInSnapZone, museumReveal, nearestIndex]);
 
   const current = devices[centeredIndex] ?? devices[HERO_DEVICE_INDEX] ?? devices[0];
-  const currentModelConfig = current ? getMuseumSceneModelConfig(current, bundle.assets) : undefined;
-  const isSvgDevice = currentModelConfig?.kind === "svg";
+  const currentAudioAsset = current?.musicAssetId
+    ? bundle.assets.find((asset) => asset.id === current.musicAssetId && asset.type === "audio")
+    : undefined;
 
   useEffect(() => {
     setCardAnimKey((value) => value + 1);
@@ -162,14 +167,19 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
   const museumOpacity = smoothstep(0.16, 0.88, museumReveal);
   const heroOpacity = 1 - smoothstep(0.06, 0.78, museumReveal);
   const heroIsActive = heroOpacity > 0.66;
+  const compactViewportStrength =
+    viewportWidth > 0 ? 1 - smoothstep(560, 1100, viewportWidth) : 0;
+  const responsiveSceneScale = 1 - compactViewportStrength * 0.42;
+  const responsiveSceneOffsetX = compactViewportStrength * 0.96;
+  const responsiveSceneOffsetY = compactViewportStrength * 0.54;
 
   const { deviceRenderStates } = useMuseumScene(canvasRef, bundle, displayedProgress, isDarkMode, {
     heroFocusIndex: HERO_DEVICE_INDEX,
     heroSpinStrength: 0,
     heroSpinCutoff: HERO_DEVICE_INDEX + 0.2,
-    modelScaleMultiplier: modelScale,
-    svgCardScaleMultiplier: cardScale,
-    renderSvgBackdrop: false
+    modelScaleMultiplier: modelScale * responsiveSceneScale,
+    sceneOffsetX: responsiveSceneOffsetX,
+    sceneOffsetY: responsiveSceneOffsetY
   });
   const isUsingFallbackModel = Boolean(current?.modelAssetId && current && deviceRenderStates[current.id] === "fallback");
 
@@ -185,27 +195,13 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
 
   return (
     <div className="page home-showcase">
-      {isSvgDevice ? (
-        <div
-          className="museum-svg-dom-card-layer"
-          style={
-            {
-              "--museum-svg-card-scale": String(cardScale),
-              "--museum-svg-card-opacity": String(museumOpacity)
-            } as CSSProperties
-          }
-          aria-hidden="true"
-        >
-          <div className="museum-svg-dom-card" />
-        </div>
-      ) : null}
       <canvas ref={canvasRef} className="bg-canvas home-bg-canvas" style={{ opacity: museumOpacity }} />
       <div className="museum-device-accent-layer" style={{ opacity: museumOpacity }} aria-hidden="true" />
 
       <HomeHero opacity={heroOpacity} isActive={heroIsActive} onEnter={enterMuseum} />
 
       <main
-        className={`museum-device-shell overlay${isSvgDevice ? " museum-device-shell-svg" : ""}`}
+        className="museum-device-shell overlay"
         style={{ opacity: museumOpacity, pointerEvents: museumOpacity > 0.4 ? "auto" : "none" }}
       >
         <aside className="museum-device-timeline">
@@ -217,16 +213,23 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
           />
         </aside>
 
-        <section className={`museum-device-stage${isSvgDevice ? " museum-device-stage-svg" : ""}`}>
+        <MobileDeviceTabs devices={devices} centeredIndex={centeredIndex} onJump={jumpToDevice} />
+
+        <section className="museum-device-stage">
           <div className="museum-device-backword" aria-hidden="true">
             {current.name}
           </div>
           <div
-            className={`museum-device-copy${isSvgDevice ? " museum-device-copy-svg" : ""}`}
-            style={isSvgDevice ? { opacity: leftMotionGlow } : { transform: `translateY(${leftMotionY}px)`, opacity: leftMotionGlow }}
+            className="museum-device-copy"
+            style={{ transform: `translateY(${leftMotionY}px)`, opacity: leftMotionGlow }}
           >
             <h1 key={`title-${cardAnimKey}`} className="museum-device-title fade-card">
-              <ScrambleText active={museumOpacity > 0.4} replayToken={cardAnimKey} text="CASIO" settleDurationMs={720} />
+              <ScrambleText
+                active={museumOpacity > 0.4}
+                replayToken={cardAnimKey}
+                text={current.name}
+                settleDurationMs={720}
+              />
             </h1>
             <p className="museum-device-summary fade-card">PERSONAL DEVICE MUSEUM</p>
           </div>
@@ -267,23 +270,6 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
                   onChange={(event) => setModelScale(Number(event.target.value))}
                 />
               </label>
-              {isSvgDevice ? (
-                <label className="museum-control">
-                  <div className="museum-control-row">
-                    <span className="museum-spec-item-label">Card Size</span>
-                    <span className="museum-spec-item-value">{cardScale.toFixed(2)}x</span>
-                  </div>
-                  <input
-                    className="museum-control-slider"
-                    type="range"
-                    min="0.7"
-                    max="1.55"
-                    step="0.01"
-                    value={cardScale}
-                    onChange={(event) => setCardScale(Number(event.target.value))}
-                  />
-                </label>
-              ) : null}
             </div>
             {isUsingFallbackModel ? (
               <p className="museum-spec-note">
@@ -295,6 +281,7 @@ export function HomeMuseumShowcase({ bundle }: HomeMuseumShowcaseProps) {
           <NowPlayingCard
             device={current}
             theme={bundle.publishedPage.theme}
+            audioAsset={currentAudioAsset}
             museumOpacity={museumOpacity}
             motionY={playerMotionY}
             glow={playerMotionGlow}

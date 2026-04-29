@@ -26,9 +26,11 @@ export function ProjectList({ projects }: ProjectListProps) {
             <Link className="ghost-button" href={`/dashboard/${project.id}`}>
               Open Project
             </Link>
-            <Link className="ghost-button" href={`/museum/${project.slug}`}>
-              Public Page
-            </Link>
+            {project.status === "published" ? (
+              <Link className="ghost-button" href={`/museum/${project.slug}`}>
+                Public Page
+              </Link>
+            ) : null}
           </div>
         </article>
       ))}
