@@ -11,14 +11,16 @@ export function getSupabaseEnv() {
   };
 }
 
-export function getAuthCallbackUrl(nextPath = "/dashboard") {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-  const callback = new URL("/auth/callback", baseUrl);
+function getBaseUrl(baseUrl?: string) {
+  return baseUrl ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+}
+
+export function getAuthCallbackUrl(nextPath = "/dashboard", baseUrl?: string) {
+  const callback = new URL("/auth/callback", getBaseUrl(baseUrl));
   callback.searchParams.set("next", nextPath);
   return callback.toString();
 }
 
-export function getAppUrl(path = "/") {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-  return new URL(path, baseUrl).toString();
+export function getAppUrl(path = "/", baseUrl?: string) {
+  return new URL(path, getBaseUrl(baseUrl)).toString();
 }

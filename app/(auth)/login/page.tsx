@@ -4,6 +4,7 @@ import { EmailLoginForm } from "@/components/auth/EmailLoginForm";
 import { OAuthButtons } from "@/components/auth/OAuthButtons";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getAuthCallbackUrl, getSupabaseEnv } from "@/lib/supabase/config";
+import { getRequestOrigin } from "@/lib/supabase/request-origin";
 
 export default async function LoginPage({
   searchParams
@@ -13,6 +14,7 @@ export default async function LoginPage({
   const params = await searchParams;
   const next = params.next ?? "/dashboard";
   const env = getSupabaseEnv();
+  const requestOrigin = await getRequestOrigin();
   const supabase = await createSupabaseServerClient();
 
   if (supabase) {
@@ -51,7 +53,7 @@ export default async function LoginPage({
       <div className="panel auth-divider">
         <div className="section-eyebrow">OAuth</div>
         <p className="field-help">Use provider-based auth if you do not want to manage a password.</p>
-        <OAuthButtons redirectTo={getAuthCallbackUrl(next)} enabled={env.enabled} />
+        <OAuthButtons redirectTo={getAuthCallbackUrl(next, requestOrigin)} enabled={env.enabled} />
       </div>
       <div className="inline-actions">
         <Link className="nav-link" href="/signup">
