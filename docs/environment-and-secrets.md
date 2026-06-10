@@ -12,6 +12,8 @@ Current application variables:
 - optional `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `SUPABASE_STORAGE_BUCKET`
+- `CRON_SECRET`
+- optional `HEARTBEAT_SERVICE_NAME`
 
 For the current mock-first phase, the app can still run without these values.
 
@@ -64,6 +66,8 @@ Set these in Vercel:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `SUPABASE_STORAGE_BUCKET`
+- `CRON_SECRET`
+- optional `HEARTBEAT_SERVICE_NAME`
 
 Recommended target:
 
@@ -76,6 +80,25 @@ Set the same keys, but point them to production services.
 Recommended target:
 
 - Production Vercel environment -> production Supabase + production storage bucket
+
+## Heartbeat Health Check
+
+Vercel Cron calls `GET /api/health` once per day at midnight UTC. The route:
+
+- requires `Authorization: Bearer <CRON_SECRET>`
+- checks Supabase connectivity
+- writes the result to `public.service_heartbeat_logs`
+- returns `200` when healthy and `503` when unhealthy
+
+Set `CRON_SECRET` in Vercel. Vercel automatically sends it as the bearer token
+for cron requests. Apply the heartbeat migration before enabling the cron job.
+
+Vercel Cron runs from production deployments. A Preview deployment of a branch
+will expose the route, but it will not receive scheduled cron invocations unless
+that branch is configured as the Vercel project's production branch.
+
+The daily schedule works on Vercel Hobby. On Pro or Enterprise, change the
+schedule to `*/10 * * * *` for a check every 10 minutes.
 
 ## GitHub Actions Secrets
 
